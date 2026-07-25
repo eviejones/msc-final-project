@@ -91,5 +91,6 @@ class Acled():
                     f"HTTP Code: {r.status_code}, Status: {r.reason}"
                 )
         final_df = pd.concat(r_dfs)
+        final_df["event_date"] = pd.to_datetime(final_df["event_date"])
         logger.info("All data successfully fetched.")
         return final_df
