@@ -91,6 +91,8 @@ class Acled():
                     f"HTTP Code: {r.status_code}, Status: {r.reason}"
                 )
         final_df = pd.concat(r_dfs)
+        # Add in new monthly column
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
+        final_df['year_month'] = final_df['event_date'].dt.to_period('M')
         logger.info("All data successfully fetched.")
         return final_df
