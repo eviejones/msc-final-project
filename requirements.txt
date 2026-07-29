@@ -4,3 +4,4 @@ dotenv
 numpy
 xgboost
 scikit-learn
+geopandas
