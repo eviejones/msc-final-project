@@ -14,7 +14,7 @@ class MissingEnvironmentVariable(Exception):
     pass
 
 
-class Acled:
+class AcledClient:
     def __init__(self):
         load_dotenv()
         self.endpoint = "https://acleddata.com/api/acled/read?_format=json"
