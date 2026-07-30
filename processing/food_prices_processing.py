@@ -127,4 +127,5 @@ def get_clean_data(download = True):
         for col in pivoted_df.columns
         if col not in ["region", "year_month"]
     ]
+    pivoted_df[predictor_cols] = pivoted_df[predictor_cols].fillna(0)
     return pivoted_df, predictor_cols
