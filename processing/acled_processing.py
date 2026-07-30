@@ -4,7 +4,7 @@ from ingest.acled_client import AcledClient
 from utils.dates import *
 import logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ACLED processing")
 logger.setLevel(logging.INFO)
 
 def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
