@@ -3,3 +3,4 @@
 .idea
 data
 model/mlruns
+model/mlflow.db
