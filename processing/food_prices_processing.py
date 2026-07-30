@@ -4,9 +4,11 @@ from utils.dates import *
 from utils.name_mapping import *
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WFP Processing")
 logger.setLevel(logging.INFO)
+
 
 def read_food_prices(download):
     hdx = HdxClient()
@@ -59,18 +61,17 @@ def read_food_prices(download):
         .astype(float)
         .fillna(1.0)
     )
-    renamed_df["usdprice"] = pd.to_numeric(
-        renamed_df["usdprice"], errors="coerce"
-    )
+    renamed_df["usdprice"] = pd.to_numeric(renamed_df["usdprice"], errors="coerce")
     renamed_df["usdprice_per_kg"] = (
         renamed_df["usdprice"] / renamed_df["unit_weight_in_kg"]
     )
     return renamed_df
 
+
 def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
     df = df_prices[
         (df_prices["year_month"] >= start_date) & (df_prices["year_month"] <= end_date)
-        ].copy()
+    ].copy()
 
     df_grouped = (
         df.groupby(["admin1", "year_month", "commodity"])["usdprice_per_kg"]
@@ -96,9 +97,9 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
         .sort_values(["admin1", "commodity", "year_month"])
     )
 
-    df_expanded["usdprice_per_kg"] = df_expanded.groupby(
-        ["admin1", "commodity"]
-    )["usdprice_per_kg"].transform(lambda x: x.ffill().bfill())
+    df_expanded["usdprice_per_kg"] = df_expanded.groupby(["admin1", "commodity"])[
+        "usdprice_per_kg"
+    ].transform(lambda x: x.ffill().bfill())
 
     df_pivoted = df_expanded.pivot(
         index=["admin1", "year_month"],
@@ -117,15 +118,14 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
 
     return df_pivoted
 
-def get_clean_data(download = True):
+
+def get_clean_data(download=True):
     food_prices_df = read_food_prices(download)
     pivoted_df = process_and_pivot_food_prices(food_prices_df)
     pivoted_df = pivoted_df.rename(columns={"admin1": "region"})
 
     predictor_cols = [
-        col
-        for col in pivoted_df.columns
-        if col not in ["region", "year_month"]
+        col for col in pivoted_df.columns if col not in ["region", "year_month"]
     ]
     pivoted_df[predictor_cols] = pivoted_df[predictor_cols].fillna(0)
     return pivoted_df, predictor_cols

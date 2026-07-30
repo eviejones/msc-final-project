@@ -3,9 +3,11 @@ import numpy as np
 from ingest.acled_client import AcledClient
 from utils.dates import *
 import logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ACLED processing")
 logger.setLevel(logging.INFO)
+
 
 def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
     """Takes the ACLED dataframe and marks event as conflict (1) or not conflict (0).
@@ -53,6 +55,7 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
     }
     df["conflict"] = df["sub_event_type"].apply(lambda x: acled_subevent_mapping[x])
     return df  # TODO add validation
+
 
 def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame:
     """Outputs dataframe with regional monthly conflict events and marked escalations.
@@ -114,6 +117,7 @@ def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame
     logger.info(f"Escalation target set at {k} standard deviations above the mean.")
 
     return df_grouped
+
 
 def pre_process_data(
     df: pd.DataFrame, k: float, event_col: str = "sub_event_type"
@@ -190,6 +194,7 @@ def pre_process_data(
     )
 
     return combined_df, predictor_cols
+
 
 def get_clean_data(params, download=True):
     if download:

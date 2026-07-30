@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 # Ref: https://stackoverflow.com/questions/60435406/which-exception-should-be-raised-when-a-required-environment-variable-is-missing
 class MissingEnvironmentVariable(Exception):
     pass
@@ -24,7 +25,9 @@ class AcledClient:
             self.password = os.environ["ACLED_PASSWORD"]
             self.token_url = os.environ["ACLED_TOKEN_URL"]
         except KeyError as e:
-            raise MissingEnvironmentVariable(f"Environment variable {e.args[0]} does not exist. Make sure it is saved in the .env file.")
+            raise MissingEnvironmentVariable(
+                f"Environment variable {e.args[0]} does not exist. Make sure it is saved in the .env file."
+            )
 
         self.access_token = self._get_access_token()
 
@@ -39,9 +42,7 @@ class AcledClient:
             "grant_type": "password",
             "client_id": "acled",
         }
-        response = requests.post(
-            self.token_url, headers=headers, data=data, timeout=20
-        )
+        response = requests.post(self.token_url, headers=headers, data=data, timeout=20)
 
         if response.status_code == 200:
             token_data = response.json()
@@ -54,7 +55,7 @@ class AcledClient:
     def _build_params(self) -> dict:
         """Builds the parameter dictionary from passed attributes and formats it based on the API documentation.
 
-         Documentation found at: https://acleddata.com/acled-api-documentation"""
+        Documentation found at: https://acleddata.com/acled-api-documentation"""
         if isinstance(self.countries, str):
             self.countries = [self.countries]
 
@@ -70,7 +71,9 @@ class AcledClient:
             params["event_type"] = ":OR:event_type=".join(self.event_types)
         return params
 
-    def get_data(self, countries: list[str], start_date: str, end_date: str, event_types=None):
+    def get_data(
+        self, countries: list[str], start_date: str, end_date: str, event_types=None
+    ):
         """Gets data for specified countries and dates from the ACLED API.
 
         Args:
@@ -81,7 +84,7 @@ class AcledClient:
 
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
-            """
+        """
         self.countries = countries
         self.start_date = start_date
         self.end_date = end_date
@@ -117,6 +120,6 @@ class AcledClient:
                 )
         final_df = pd.concat(r_dfs)
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
-        final_df['year_month'] = final_df['event_date'].dt.to_period('M')
+        final_df["year_month"] = final_df["event_date"].dt.to_period("M")
         logger.info("All data successfully fetched.")
         return final_df

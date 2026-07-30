@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WFP Ingest")
 logger.setLevel(logging.INFO)
 
+
 class HdxClient:
     def __init__(self):
         self.data = Dataset
@@ -60,9 +61,7 @@ class HdxClient:
                     path = file_path
 
             return (
-                pd.read_csv(path)
-                if file_type.lower() == "csv"
-                else gpd.read_file(path)
+                pd.read_csv(path) if file_type.lower() == "csv" else gpd.read_file(path)
             )
 
         return None
