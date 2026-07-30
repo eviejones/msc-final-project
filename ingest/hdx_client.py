@@ -1,67 +1,68 @@
-from hdx.utilities.easy_logging import setup_logging
+import logging
+import os
+import zipfile
+import pandas as pd
+import geopandas as gpd
 from hdx.api.configuration import Configuration
 from hdx.data.dataset import Dataset
-import geopandas as gpd
-import zipfile
-import os
 
-setup_logging()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("WFP Ingest")
+logger.setLevel(logging.INFO)
 
 class HdxClient:
     def __init__(self):
         self.data = Dataset
         if not Configuration._configuration:
-            Configuration.create(hdx_site='prod', user_agent='msc-project', hdx_read_only=True)
+            Configuration.create(
+                hdx_site="prod", user_agent="msc-project", hdx_read_only=True
+            )
 
-    def get_data(self, dataset_name, file_name, file_type):
+    def _load_file(self, file_path):
+        if file_path.endswith(".csv"):
+            return pd.read_csv(file_path)
+        return gpd.read_file(file_path)
+
+    def get_data(self, dataset_name, file_name, file_type, download=True):
+        download_dir = "../data/hdx"
+        file_path = os.path.join(download_dir, f"{file_name}.{file_type}")
+
+        # Read local file if download is false
+        if not download:
+            logger.info(f"download=False: Reading local file {file_path}")
+            if os.path.exists(file_path):
+                return (
+                    pd.read_csv(file_path)
+                    if file_type.lower() == "csv"
+                    else gpd.read_file(file_path)
+                )
+            logger.error(f"Local file not found at {file_path}")
+            return None
+
+        # Download data from hdx if download is true
         dataset = self.data.read_from_hdx(dataset_name)
-        if dataset is None:
-            print("Dataset not found.")
+        if not dataset:
             return None
 
         resources = dataset.get_resources()
-
-        target_resource = None
-        for resource in resources:
-            if resource['format'].lower() == file_type.lower():
-                target_resource = resource
-                break
+        target_resource = next(
+            (r for r in resources if r["format"].lower() == file_type.lower()), None
+        )
 
         if target_resource:
-            download_dir = "../data/hdx"
             os.makedirs(download_dir, exist_ok=True)
+            _, path = target_resource.download(folder=download_dir)
 
-            # Download the file to your local environment
-            url, path = target_resource.download(folder=download_dir)
-            print(f"Downloaded file to: {path}")
-
-            # Unzip and match the specific file_name (e.g., 'adm1')
+            # Unzip if zipped
             if zipfile.is_zipfile(path):
-                print("Extracting zip archive...")
-                with zipfile.ZipFile(path, 'r') as zip_ref:
-                    extract_dir = os.path.dirname(path)
-                    zip_ref.extractall(extract_dir)
+                with zipfile.ZipFile(path, "r") as zip_ref:
+                    zip_ref.extractall(download_dir)
+                    path = file_path
 
-                    extracted_files = zip_ref.namelist()
+            return (
+                pd.read_csv(path)
+                if file_type.lower() == "csv"
+                else gpd.read_file(path)
+            )
 
-                    # Look for a file containing both the target file_name and a valid spatial extension
-                    target_file = next(
-                        (os.path.join(extract_dir, f) for f in extracted_files
-                         if file_name.lower() in f.lower() and f.endswith(('.geojson', '.shp', '.gpkg'))),
-                        None
-                    )
-
-                    if target_file:
-                        path = target_file
-                    else:
-                        print(f"Could not find a file matching '{file_name}' with a supported spatial format inside the zip.")
-                        return None
-
-            # Load the specific file into a GeoPandas GeoDataFrame
-            gdf = gpd.read_file(path) # TODO could also be normal df
-
-            print(f"Successfully loaded '{file_name}' into variable dataframe")
-            return gdf
-        else:
-            print("No suitable vector/boundary format found in resources.")
-            return None
+        return None
