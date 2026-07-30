@@ -58,9 +58,9 @@ class HdxClient:
                         return None
 
             # Load the specific file into a GeoPandas GeoDataFrame
-            gdf = gpd.read_file(path)
+            gdf = gpd.read_file(path) # TODO could also be normal df
 
-            print(f"Successfully loaded '{file_name}' into variable 'gdf'!")
+            print(f"Successfully loaded '{file_name}' into variable dataframe")
             return gdf
         else:
             print("No suitable vector/boundary format found in resources.")
