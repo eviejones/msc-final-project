@@ -1,7 +1,7 @@
 # %%
 import pandas as pd
 import datetime as dt
-from ingest.acled import Acled
+from ingest.acled_client import Acled
 import numpy as np
 import xgboost as xgb
 import logging
