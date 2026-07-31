@@ -73,6 +73,7 @@ def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame
         pd.DataFrame: Grouped regional dataframe, with conflict escalation marked (Y)
     """
     df = df.copy()
+
     df_grouped = (
         df.groupby(["admin1", "year_month"])["conflict"]
         .sum()
@@ -142,6 +143,7 @@ def pre_process_data(
         )
     df = df.copy()
     df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
+
     df = mark_conflict_events(df)
 
     pivot_df = pd.pivot_table(
@@ -196,12 +198,15 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(params, download=True):
+def get_clean_data(params, download=True, remove_abyei=True):
     if download:
         acled = AcledClient()
         all_data = acled.get_data(countries, start_date, end_date)
     else:
         all_data = pd.read_csv("../data/all_data.csv")
+
+    if remove_abyei:
+        all_data = all_data[~all_data["admin1"].str.lower().str.contains("abyei", na=False)]
     processed_df, predictor_cols = pre_process_data(
         all_data, params["k"], params["event_col"]
     )
