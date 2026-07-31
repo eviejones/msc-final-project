@@ -9,11 +9,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WFP Processing")
 logger.setLevel(logging.INFO)
 
-
-def read_food_prices(download):
+def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
     hdx = HdxClient()
 
-    # 1. Load Sudan
     df_sudan = hdx.get_data(
         dataset_name="wfp-food-prices-for-sudan",
         file_name="Sudan - Food Prices",
@@ -21,20 +19,20 @@ def read_food_prices(download):
         download=download,
     )
 
-    # 2. Load South Sudan
-    df_south_sudan = hdx.get_data(
-        dataset_name="wfp-food-prices-for-south-sudan",
-        file_name="South Sudan - Food Prices",
-        file_type="csv",
-        download=download,
-    )
+    if remove_abyei:
+        df_combined = df_sudan
+    else: # Load Abyei from South Sudan
+        df_south_sudan = hdx.get_data(
+            dataset_name="wfp-food-prices-for-south-sudan",
+            file_name="South Sudan - Food Prices",
+            file_type="csv",
+            download=download,
+        )
 
-    # 3. FILTER ONLY ABYEI FROM SOUTH SUDAN DATA
-    df_abyei = df_south_sudan[df_south_sudan["market"] == "Abyei"].copy()
-    df_abyei["admin1"] = "Abyei"
+        df_abyei = df_south_sudan[df_south_sudan["market"] == "Abyei"].copy()
+        df_abyei["admin1"] = "Abyei"
 
-    # 4. Concatenate Sudan + Abyei (Excludes all other South Sudan regions)
-    df_combined = pd.concat([df_sudan, df_abyei], ignore_index=True)
+        df_combined = pd.concat([df_sudan, df_abyei], ignore_index=True)
 
     primary_commodities = ["Sorghum", "Millet", "Wheat flour"]
 
@@ -47,9 +45,6 @@ def read_food_prices(download):
     df_filtered_cols = df_filtered[
         ["date", "admin1", "admin2", "market", "commodity", "unit", "usdprice"]
     ].copy()
-
-    def clean_state_names(value):
-        return SUDAN_STATE_MAPPING.get(value, value)
 
     renamed_df = df_filtered_cols.copy()
     renamed_df["admin1"] = df_filtered_cols["admin1"].apply(clean_state_names)
@@ -65,6 +60,7 @@ def read_food_prices(download):
     renamed_df["usdprice_per_kg"] = (
         renamed_df["usdprice"] / renamed_df["unit_weight_in_kg"]
     )
+
     return renamed_df
 
 
@@ -115,12 +111,13 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
             "Wheat flour": "price_wheat_flour",
         }
     )
-
+    price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
+    df_pivoted[price_cols] = df_pivoted.groupby("admin1")[price_cols].shift(1)
     return df_pivoted
 
 
-def get_clean_data(download=True):
-    food_prices_df = read_food_prices(download)
+def get_clean_data(download=True, remove_abyei= True):
+    food_prices_df = read_food_prices(download, remove_abyei)
     pivoted_df = process_and_pivot_food_prices(food_prices_df)
     pivoted_df = pivoted_df.rename(columns={"admin1": "region"})
 
