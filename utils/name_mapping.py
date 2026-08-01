@@ -8,7 +8,7 @@ SUDAN_STATE_MAPPING = {
 
 SUDAN_PCODE_MAPPING = {
     "SD19": "Abyei",
-    "SS80": "Abyei", # South Sudan
+    "SS80": "Abyei",  # South Sudan
     "SD15": "Aj Jazirah",
     "SD08": "Blue Nile",
     "SD06": "Central Darfur",

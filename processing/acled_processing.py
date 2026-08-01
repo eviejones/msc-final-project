@@ -206,7 +206,9 @@ def get_clean_data(params, download=True, remove_abyei=True):
         all_data = pd.read_csv("../data/all_data.csv")
 
     if remove_abyei:
-        all_data = all_data[~all_data["admin1"].str.lower().str.contains("abyei", na=False)]
+        all_data = all_data[
+            ~all_data["admin1"].str.lower().str.contains("abyei", na=False)
+        ]
     processed_df, predictor_cols = pre_process_data(
         all_data, params["k"], params["event_col"]
     )

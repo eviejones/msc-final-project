@@ -60,10 +60,14 @@ class AcledClient:
             end = datetime.strptime(end_date, "%Y-%m-%d")
 
             if start > end:
-                raise ValueError(f"start_date ({start_date}) cannot be after end_date ({end_date}).")
+                raise ValueError(
+                    f"start_date ({start_date}) cannot be after end_date ({end_date})."
+                )
         except ValueError as e:
             if "does not match format" in str(e) or "unconverted data" in str(e):
-                raise ValueError("Dates must be provided in the format YYYY-MM-DD.") from e
+                raise ValueError(
+                    "Dates must be provided in the format YYYY-MM-DD."
+                ) from e
             raise e
 
     def _validate_countries(self, countries: list[str] | str) -> None:
@@ -76,7 +80,9 @@ class AcledClient:
 
         for country in countries:
             if not isinstance(country, str) or not country.strip():
-                raise ValueError(f"Invalid country name provided: '{country}'. It must be a non-empty string.")
+                raise ValueError(
+                    f"Invalid country name provided: '{country}'. It must be a non-empty string."
+                )
 
     def _build_params(self) -> dict:
         """Builds the parameter dictionary from passed attributes and formats it based on the API documentation.
@@ -113,7 +119,7 @@ class AcledClient:
         """
         self._validate_dates(start_date, end_date)
         self._validate_countries(countries)
-        
+
         self.countries = countries
         self.start_date = start_date
         self.end_date = end_date

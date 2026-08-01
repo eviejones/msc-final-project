@@ -24,9 +24,13 @@ class HdxClient:
 
         if not download:
             file_path = next(
-                (os.path.join(download_dir, f) for f in os.listdir(download_dir)
-                 if file_name.lower() in f.lower() and f.endswith(f".{file_type.lower()}")),
-                None
+                (
+                    os.path.join(download_dir, f)
+                    for f in os.listdir(download_dir)
+                    if file_name.lower() in f.lower()
+                    and f.endswith(f".{file_type.lower()}")
+                ),
+                None,
             )
 
             if file_path:
@@ -43,7 +47,7 @@ class HdxClient:
 
         resources = dataset.get_resources()
         target_resource = next(
-            (r for r in resources if file_type.lower() in r['format'].lower()), None
+            (r for r in resources if file_type.lower() in r["format"].lower()), None
         )
 
         if target_resource:
@@ -53,20 +57,26 @@ class HdxClient:
 
             if zipfile.is_zipfile(path):
                 logger.info("Extracting zip archive...")
-                with zipfile.ZipFile(path, 'r') as zip_ref:
+                with zipfile.ZipFile(path, "r") as zip_ref:
                     extract_dir = os.path.dirname(path)
                     zip_ref.extractall(extract_dir)
 
                     target_file = next(
-                        (os.path.join(extract_dir, f) for f in zip_ref.namelist()
-                         if file_name.lower() in f.lower() and f.endswith(f".{file_type.lower()}")),
-                        None
+                        (
+                            os.path.join(extract_dir, f)
+                            for f in zip_ref.namelist()
+                            if file_name.lower() in f.lower()
+                            and f.endswith(f".{file_type.lower()}")
+                        ),
+                        None,
                     )
 
                     if target_file:
                         path = target_file
                     else:
-                        logger.error(f"Could not find '{file_name}' with extension '.{file_type}' inside the zip.")
+                        logger.error(
+                            f"Could not find '{file_name}' with extension '.{file_type}' inside the zip."
+                        )
                         return None
 
             logger.info(f"Successfully loaded '{file_name}' into dataframe")

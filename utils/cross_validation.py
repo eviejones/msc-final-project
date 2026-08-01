@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Cross validation")
 logger.setLevel(logging.INFO)
 
+
 def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):
     """Generates train and test indices for time series cross-validation.
 
@@ -31,6 +32,7 @@ def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):
         train_idx = dates[dates.isin(train_months)].index.to_numpy()
         test_idx = dates[dates.isin(test_months)].index.to_numpy()
         yield train_idx, test_idx
+
 
 def verify_cv_splits(df, cv_splits, date_column="year_month"):
     logger.info("Cross-validation testing splits:")
@@ -56,6 +58,7 @@ def verify_cv_splits(df, cv_splits, date_column="year_month"):
             print("Training window overlaps or exceeds the test window!")
 
         print("-" * 30)
+
 
 def timeseries_cross_val_predict(
     best_model, X_train: pd.DataFrame, y_train: pd.Series, cv: list[int]

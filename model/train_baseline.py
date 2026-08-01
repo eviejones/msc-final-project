@@ -1,12 +1,9 @@
-from utils.data_prep import (
-    split_data,
-    calculate_conflict_ratio
-)
+from utils.data_prep import split_data, calculate_conflict_ratio
 from utils.dates import *
 from utils.cross_validation import (
     grouped_timeseries_cv_ids,
     verify_cv_splits,
-    timeseries_cross_val_predict
+    timeseries_cross_val_predict,
 )
 import numpy as np
 import xgboost as xgb
@@ -24,6 +21,7 @@ from sklearn.model_selection import RandomizedSearchCV
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Train baseline")
 logger.setLevel(logging.INFO)
+
 
 def train_evaluate_model(processed_df, predictor_cols, params, best_params=False):
 

@@ -9,7 +9,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WFP Processing")
 logger.setLevel(logging.INFO)
 
+
 def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
+    """Fetches, filters, and cleans World Food Programme (WFP) food price data for Sudan
+    from the HDX platform.
+
+    This function retrieves raw CSV data, optionally includes the Abyei region from
+    the South Sudan dataset, and filters for primary commodities (Sorghum, Millet,
+    Wheat flour) sold at retail prices. It standardizes dates, admin regions, and
+    calculates a unified USD price per kilogram.
+
+    Args:
+        download (bool, optional): If True, downloads fresh datasets from HDX.
+            If False, relies on local cached files. Defaults to True.
+        remove_abyei (bool, optional): If True, excludes the Abyei region. If False,
+            fetches the South Sudan dataset, extracts Abyei market data, and appends
+            it to the Sudan dataset. Defaults to True.
+
+    Returns:
+        pd.DataFrame: A cleaned DataFrame containing historical retail prices for
+            specific commodities, with standardized state names, temporal periods,
+            and calculated 'usdprice_per_kg'.
+    """
     hdx = HdxClient()
 
     df_sudan = hdx.get_data(
@@ -21,7 +42,7 @@ def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.Dat
 
     if remove_abyei:
         df_combined = df_sudan
-    else: # Load Abyei from South Sudan
+    else:  # Load Abyei from South Sudan
         df_south_sudan = hdx.get_data(
             dataset_name="wfp-food-prices-for-south-sudan",
             file_name="South Sudan - Food Prices",
@@ -65,6 +86,23 @@ def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.Dat
 
 
 def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
+    """Aggregates and pivots food price data to create time-series features.
+
+    This function filters the dataset by global start/end dates, calculates the
+    median monthly price per region and commodity, and ensures a continuous monthly
+    timeline by reindexing. Missing values are filled using forward-fill followed
+    by backward-fill. The data is then pivoted so each commodity is a column, and
+    values are shifted by 1 month to create lag features for predictive modeling.
+
+    Args:
+        df_prices (pd.DataFrame): The cleaned food prices DataFrame, typically
+            the output from `read_food_prices`.
+
+    Returns:
+        pd.DataFrame: A continuous time-series DataFrame indexed by region ('admin1')
+            and 'year_month', featuring 1-month lagged median prices for millet,
+            sorghum, and wheat flour.
+    """
     df = df_prices[
         (df_prices["year_month"] >= start_date) & (df_prices["year_month"] <= end_date)
     ].copy()
@@ -116,7 +154,25 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
     return df_pivoted
 
 
-def get_clean_data(download=True, remove_abyei= True):
+def get_clean_data(download: bool = True, remove_abyei: bool = True):
+    """An orchestrator function that runs the full food price data pipeline.
+
+    This function calls the read and process functions in sequence, renames
+    the geography column to a standard 'region' name, and replaces any
+    remaining NaN values in the feature columns with 0.
+
+    Args:
+        download (bool, optional): Indicates whether to download fresh data
+            from HDX. Defaults to True.
+        remove_abyei (bool, optional): Indicates whether to exclude Abyei market
+            data from South Sudan. Defaults to True.
+
+    Returns:
+        tuple: A tuple containing:
+            - pd.DataFrame: The final machine-learning-ready dataset.
+            - list[str]: A list of column names identifying the predictor
+              variables (the lagged price features).
+    """
     food_prices_df = read_food_prices(download, remove_abyei)
     pivoted_df = process_and_pivot_food_prices(food_prices_df)
     pivoted_df = pivoted_df.rename(columns={"admin1": "region"})

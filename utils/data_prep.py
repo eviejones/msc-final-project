@@ -8,6 +8,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Data preparation")
 logger.setLevel(logging.INFO)
 
+
 def calculate_conflict_ratio(df: pd.DataFrame) -> dict:
     """Calculates the number of regions where there was a monthly escalation.
 
@@ -22,6 +23,7 @@ def calculate_conflict_ratio(df: pd.DataFrame) -> dict:
     ratio = count_0 / count_1
 
     return {"non-escalation": count_0, "escalation": count_1, "ratio": ratio}
+
 
 def split_data(
     df: pd.DataFrame,
@@ -53,11 +55,12 @@ def split_data(
 
     return split_df, y, X
 
+
 def get_clean_combined_data(
     params: dict,
     data_sources: list[str] | None = None,
     download: bool = False,
-    remove_abyei: bool = True
+    remove_abyei: bool = True,
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 

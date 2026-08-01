@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Rainfall Processing")
 logger.setLevel(logging.INFO)
 
+
 # TODO: Figure this out because I don't get Abyei
 def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
     """Reads and standardises subnational rainfall data from the HDX client.
@@ -36,9 +37,7 @@ def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFr
     )
     rainfall_sudan_admin1 = rainfall_sudan[rainfall_sudan["adm_level"] == 1].copy()
     rainfall_sudan_admin1["region"] = (
-        rainfall_sudan_admin1["PCODE"]
-        .map(SUDAN_PCODE_MAPPING)
-        .apply(clean_state_names)
+        rainfall_sudan_admin1["PCODE"].map(SUDAN_PCODE_MAPPING).apply(clean_state_names)
     )
 
     if remove_abyei:
@@ -61,7 +60,7 @@ def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFr
 
         rainfall_abyei = rainfall_ss_admin1[
             rainfall_ss_admin1["region"] == "Abyei"
-            ].copy()
+        ].copy()
 
         rainfall_combined = pd.concat(
             [rainfall_sudan_admin1, rainfall_abyei], ignore_index=True
@@ -92,14 +91,11 @@ def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
         containing the shifted rainfall anomalies.
     """
     df = df_rainfall[
-        (df_rainfall["year_month"] >= start_date) & (df_rainfall["year_month"] <= end_date)
-        ].copy()
+        (df_rainfall["year_month"] >= start_date)
+        & (df_rainfall["year_month"] <= end_date)
+    ].copy()
 
-    df_grouped = (
-        df.groupby(["region", "year_month"])["r3q"]
-        .median()
-        .reset_index()
-    )
+    df_grouped = df.groupby(["region", "year_month"])["r3q"].median().reset_index()
 
     all_regions = df_grouped["region"].unique()
     all_months = pd.period_range(
@@ -118,12 +114,16 @@ def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
 
     df_expanded = df_expanded.rename(columns={"r3q": "rainfall_3m_anomaly"})
 
-    df_expanded["rainfall_3m_anomaly"] = df_expanded.groupby("region")["rainfall_3m_anomaly"].shift(1)
+    df_expanded["rainfall_3m_anomaly"] = df_expanded.groupby("region")[
+        "rainfall_3m_anomaly"
+    ].shift(1)
 
     return df_expanded
 
 
-def get_clean_data(download: bool = True, remove_abyei: bool = True) -> tuple[pd.DataFrame, list[str]]:
+def get_clean_data(
+    download: bool = True, remove_abyei: bool = True
+) -> tuple[pd.DataFrame, list[str]]:
     """Orchestrates the reading and processing of rainfall data.
 
     It ties together the fetching and processing pipelines, replacing any missing
