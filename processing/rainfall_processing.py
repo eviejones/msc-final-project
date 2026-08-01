@@ -9,7 +9,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Rainfall Processing")
 logger.setLevel(logging.INFO)
 
-def read_rainfall(download=True, remove_abyei=True):
+# TODO: Figure this out because I don't get Abyei
+def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
+    """Reads and standardises subnational rainfall data from the HDX client.
+
+    This function retrieves the main Sudan rainfall dataset, filters it to administrative
+    level 1, and maps PCODEs to clean region names. Optionally, it retrieves South Sudan
+    data to extract information for the Abyei region and appends it to the dataset.
+
+    Args:
+        download (bool): Whether to download the fresh dataset from HDX. Defaults to True.
+        remove_abyei (bool): If True, excludes the Abyei region from the final dataset.
+        If False, fetches South Sudan data to include Abyei. Defaults to True.
+
+    Returns:
+        pd.DataFrame: A formatted DataFrame containing the combined rainfall data
+        with standardised regions and formatted date periods.
+    """
     hdx = HdxClient()
 
     rainfall_sudan = hdx.get_data(
@@ -59,7 +75,22 @@ def read_rainfall(download=True, remove_abyei=True):
 
     return rainfall_combined
 
+
 def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
+    """Processes the raw rainfall dataset to calculate monthly regional anomalies.
+
+    This function filters the dataset within the global start and end dates,
+    calculates the median 'r3q' value for each region and month, ensures a
+    complete time series index without missing months, and calculates a
+    lagged 3-month rainfall anomaly.
+
+    Args:
+        df_rainfall (pd.DataFrame): The raw rainfall DataFrame returned by `read_rainfall`.
+
+    Returns:
+        pd.DataFrame: A processed DataFrame indexed by region and year_month,
+        containing the shifted rainfall anomalies.
+    """
     df = df_rainfall[
         (df_rainfall["year_month"] >= start_date) & (df_rainfall["year_month"] <= end_date)
         ].copy()
@@ -92,7 +123,22 @@ def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
     return df_expanded
 
 
-def get_clean_data(download=True, remove_abyei=True):
+def get_clean_data(download: bool = True, remove_abyei: bool = True) -> tuple[pd.DataFrame, list[str]]:
+    """Orchestrates the reading and processing of rainfall data.
+
+    It ties together the fetching and processing pipelines, replacing any missing
+    values in the final anomaly calculations with zero, and extracts a list
+    of predictor column names for downstream modelling.
+
+    Args:
+        download (bool): Whether to download the fresh dataset from HDX. Defaults to True.
+        remove_abyei (bool): Whether to exclude the Abyei region. Defaults to True.
+
+    Returns:
+        tuple[pd.DataFrame, list[str]]: A tuple containing:
+            - The final, cleaned, and processed DataFrame.
+            - A list of predictor column names (e.g., ["rainfall_3m_anomaly"]).
+    """
     rainfall_df = read_rainfall(download, remove_abyei)
     processed_df = process_rainfall(rainfall_df)
     processed_df["rainfall_3m_anomaly"] = processed_df["rainfall_3m_anomaly"].fillna(0)
