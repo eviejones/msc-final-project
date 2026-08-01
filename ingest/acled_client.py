@@ -2,11 +2,12 @@ import os
 import pandas as pd
 import requests
 import json
+from datetime import datetime
 import logging
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ACLED Client")
 logger.setLevel(logging.INFO)
 
 
@@ -52,6 +53,31 @@ class AcledClient:
             f"Failed to get access token: {response.status_code} {response.text}"
         )
 
+    def _validate_dates(self, start_date: str, end_date: str) -> None:
+        """Validates that dates are in YYYY-MM-DD format and logically ordered."""
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+
+            if start > end:
+                raise ValueError(f"start_date ({start_date}) cannot be after end_date ({end_date}).")
+        except ValueError as e:
+            if "does not match format" in str(e) or "unconverted data" in str(e):
+                raise ValueError("Dates must be provided in the format YYYY-MM-DD.") from e
+            raise e
+
+    def _validate_countries(self, countries: list[str] | str) -> None:
+        """Validates that country names are non-empty strings with recognised characters."""
+        if not countries:
+            raise ValueError("The countries list cannot be empty.")
+
+        if isinstance(countries, str):
+            countries = [countries]
+
+        for country in countries:
+            if not isinstance(country, str) or not country.strip():
+                raise ValueError(f"Invalid country name provided: '{country}'. It must be a non-empty string.")
+
     def _build_params(self) -> dict:
         """Builds the parameter dictionary from passed attributes and formats it based on the API documentation.
 
@@ -85,6 +111,9 @@ class AcledClient:
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
         """
+        self._validate_dates(start_date, end_date)
+        self._validate_countries(countries)
+        
         self.countries = countries
         self.start_date = start_date
         self.end_date = end_date
