@@ -11,6 +11,7 @@ logger.setLevel(logging.INFO)
 
 def read_rainfall(download=True, remove_abyei=True):
     hdx = HdxClient()
+
     rainfall_sudan = hdx.get_data(
         dataset_name="sdn-rainfall-subnational",
         file_name="sdn-rainfall-subnat-full",
@@ -24,14 +25,35 @@ def read_rainfall(download=True, remove_abyei=True):
         .apply(clean_state_names)
     )
 
-    rainfall_combined = rainfall_sudan_admin1.dropna(subset=["region"]).copy()
-
-    # Filter Abyei dynamically based on flag
     if remove_abyei:
-        rainfall_combined = rainfall_combined[
-            rainfall_combined["region"] != "Abyei"
-        ]
+        rainfall_combined = rainfall_sudan_admin1
+    else:
+        # Read South Sudan data and pull where region == "Abyei"
+        rainfall_ss = hdx.get_data(
+            dataset_name="ssd-rainfall-subnational",
+            file_name="ssd-rainfall-subnat-full",
+            file_type="csv",
+            download=download,
+        )
+        rainfall_ss_admin1 = rainfall_ss[rainfall_ss["adm_level"] == 1].copy()
 
+        rainfall_ss_admin1["region"] = (
+            rainfall_ss_admin1["PCODE"]
+            .map(SUDAN_PCODE_MAPPING)
+            .apply(clean_state_names)
+        )
+
+        rainfall_abyei = rainfall_ss_admin1[
+            rainfall_ss_admin1["region"] == "Abyei"
+            ].copy()
+
+        rainfall_combined = pd.concat(
+            [rainfall_sudan_admin1, rainfall_abyei], ignore_index=True
+        )
+        print("South Sudan PCODE sample:", rainfall_ss_admin1["PCODE"].head().tolist())
+        print("South Sudan columns:", rainfall_ss_admin1.columns.tolist())
+
+    rainfall_combined = rainfall_combined.dropna(subset=["region"])
     rainfall_combined["date"] = pd.to_datetime(rainfall_combined["date"])
     rainfall_combined["year_month"] = rainfall_combined["date"].dt.to_period("M")
 
