@@ -212,4 +212,4 @@ def get_clean_data(params, download=True, remove_abyei=True):
     processed_df, predictor_cols = pre_process_data(
         all_data, params["k"], params["event_col"]
     )
-    return processed_df, predictor_cols
+    return processed_df, predictor_cols, all_data

@@ -8,14 +8,13 @@ from utils.cross_validation import (
 import numpy as np
 import xgboost as xgb
 import logging
-import mlflow
 
 from sklearn.metrics import (
     average_precision_score,
     classification_report,
     precision_recall_curve,
 )
-from sklearn.base import clone
+
 from sklearn.model_selection import RandomizedSearchCV
 
 logging.basicConfig(level=logging.INFO)

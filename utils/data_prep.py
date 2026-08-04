@@ -1,7 +1,8 @@
 import pandas as pd
-import processing.acled_processing as acled
+import processing.acled_events_processing as acled
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
+import processing.notes_processing as notes
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +85,7 @@ def get_clean_combined_data(
             names from all merged datasets.
     """
     # Always fetch ACLED as the base dataset
-    processed_acled_df, acled_predictor_cols = acled.get_clean_data(
+    processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
         params, download, remove_abyei
     )
     combined_df = processed_acled_df
@@ -110,5 +111,14 @@ def get_clean_combined_data(
             )
             predictor_cols = predictor_cols + rain_predictor_cols
             logger.info("Rainfall data processed.")
-
+        if "notes" in sources_lower:
+            if download:
+                processed_notes_df, notes_prediction_cols = notes.get_clean_data(True, raw_acled_df)
+            else:
+                processed_notes_df, notes_prediction_cols = notes.get_clean_data() # Read local embeddings
+            combined_df = combined_df.merge(
+                    processed_notes_df, on=["region", "year_month"], how="inner"
+                )
+            predictor_cols = predictor_cols + notes_prediction_cols
+            logger.info("Notes data processed.")
     return combined_df, predictor_cols
