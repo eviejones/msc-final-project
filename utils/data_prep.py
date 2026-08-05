@@ -58,10 +58,11 @@ def split_data(
 
 
 def get_clean_combined_data(
-    params: dict,
     data_sources: list[str] | None = None,
     download: bool = False,
     remove_abyei: bool = True,
+    k: float = 0.5,
+    event_col: str = "event_type"
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 
@@ -70,7 +71,6 @@ def get_clean_combined_data(
     they are specified in the data_sources list.
 
     Args:
-        params (dict): Configuration parameters required for fetching ACLED data.
         data_sources (list[str] | None, optional): A list of additional data sources
             to merge. Valid options include "food" and "rain" (case-insensitive).
             Defaults to None.
@@ -86,7 +86,10 @@ def get_clean_combined_data(
     """
     # Always fetch ACLED as the base dataset
     processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
-        params, download, remove_abyei
+        download,
+        remove_abyei,
+        k,
+        event_col
     )
     combined_df = processed_acled_df
     predictor_cols = acled_predictor_cols
@@ -111,7 +114,7 @@ def get_clean_combined_data(
             )
             predictor_cols = predictor_cols + rain_predictor_cols
             logger.info("Rainfall data processed.")
-        if "notes" in sources_lower:
+        if "text" in sources_lower:
             if download:
                 processed_notes_df, notes_prediction_cols = notes.get_clean_data(True, raw_acled_df)
             else:

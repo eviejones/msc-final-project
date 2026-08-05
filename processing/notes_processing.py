@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from transformers import AutoTokenizer, AutoModel
 import torch
+from sklearn.decomposition import PCA
 
 def remove_dates(df):
     ### Used Gemini
@@ -74,6 +75,36 @@ def get_monthly_regional_embeddings(df, tokenizer, model):
     df_final = monthly_region_embeddings [(monthly_region_embeddings ["year_month"] >= train_start_date) & (monthly_region_embeddings ["year_month"] <= end_date)].copy()
 
     return df_final
+
+def apply_pca_train_only(train_df, onset_df, active_df, predictor_cols, variance_threshold=0.90):
+
+    emb_cols = [c for c in predictor_cols if c.startswith("emb_")]
+    non_emb_cols = [c for c in predictor_cols if not c.startswith("emb_")]
+
+    pca = PCA(n_components=variance_threshold, random_state=7)
+
+    X_train_emb_pca = pca.fit_transform(train_df[emb_cols])
+    X_onset_emb_pca = pca.transform(onset_df[emb_cols])
+    X_active_emb_pca = pca.transform(active_df[emb_cols])
+
+    logger.info(
+        f"PCA fit on train embeddings only: {len(emb_cols)} raw dims -> "
+        f"{pca.n_components_} components for {variance_threshold:.0%} variance."
+    )
+
+    pc_names = [f"PC{i+1}" for i in range(pca.n_components_)]
+
+    def rebuild(df, emb_pca_array):
+        pcs = pd.DataFrame(emb_pca_array, columns=pc_names, index=df.index)
+        return pd.concat([df[non_emb_cols].reset_index(drop=True),
+                           pcs.reset_index(drop=True)], axis=1)
+
+    X_train = rebuild(train_df, X_train_emb_pca)
+    X_onset = rebuild(onset_df, X_onset_emb_pca)
+    X_active = rebuild(active_df, X_active_emb_pca)
+
+    final_predictor_cols = non_emb_cols + pc_names
+    return X_train, X_onset, X_active, pca, final_predictor_cols
 
 def full_dataset(df):
     df = df.copy()
