@@ -198,7 +198,7 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(params, download=True, remove_abyei=True):
+def get_clean_data(download=True, remove_abyei=True, k: int = 0.5, event_col: str = "event_type"):
     if download:
         acled = AcledClient()
         all_data = acled.get_data(countries, start_date, end_date)
@@ -210,6 +210,6 @@ def get_clean_data(params, download=True, remove_abyei=True):
             ~all_data["admin1"].str.lower().str.contains("abyei", na=False)
         ]
     processed_df, predictor_cols = pre_process_data(
-        all_data, params["k"], params["event_col"]
+        all_data, k, event_col
     )
     return processed_df, predictor_cols, all_data
