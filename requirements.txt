@@ -7,3 +7,6 @@ scikit-learn
 geopandas
 mlflow
 pytest
+torch
+python-dotenv
+transformers
