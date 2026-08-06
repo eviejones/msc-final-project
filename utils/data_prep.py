@@ -1,9 +1,11 @@
+import logging
+
 import pandas as pd
+
 import processing.acled_events_processing as acled
+import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
-import processing.acled_text_processing as notes
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Data preparation")
@@ -57,12 +59,13 @@ def split_data(
 
     return split_df, y, X
 
+
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
     download: bool = False,
     remove_abyei: bool = True,
     k: float = 0.5,
-    event_col: str = "event_type"
+    event_col: str = "event_type",
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 
@@ -91,7 +94,9 @@ def get_clean_combined_data(
     # Validate data_sources
     if data_sources is not None:
         if not isinstance(data_sources, list):
-            raise TypeError(f"data_sources must be a list or None, got {type(data_sources).__name__}")
+            raise TypeError(
+                f"data_sources must be a list or None, got {type(data_sources).__name__}"
+            )
 
         valid_sources = {"food", "rain", "text"}
         sources_lower = [source.lower() for source in data_sources]
@@ -105,7 +110,9 @@ def get_clean_combined_data(
 
     # Validate k
     if not isinstance(k, (int, float)):
-        raise TypeError(f"k must be a numeric value (float or int), got {type(k).__name__}")
+        raise TypeError(
+            f"k must be a numeric value (float or int), got {type(k).__name__}"
+        )
     if k > 2:
         raise ValueError(f"k must be less than or equal to 2, got {k}")
 
@@ -113,16 +120,12 @@ def get_clean_combined_data(
     valid_event_cols = {"event_type", "sub_event_type"}
     if event_col not in valid_event_cols:
         raise ValueError(
-            f"Invalid event_col: '{event_col}'. "
-            f"Allowed values are: {valid_event_cols}"
+            f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
         )
 
     # ---- Fetch data (always fetch ACLED as the base dataset)
     processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
-        download,
-        remove_abyei,
-        k,
-        event_col
+        download, remove_abyei, k, event_col
     )
     combined_df = processed_acled_df
     predictor_cols = acled_predictor_cols
@@ -149,12 +152,16 @@ def get_clean_combined_data(
             logger.info("Rainfall data processed.")
         if "text" in sources_lower:
             if download:
-                processed_notes_df, notes_prediction_cols = notes.get_clean_data(True, raw_acled_df)
-            else:
-                processed_notes_df, notes_prediction_cols = notes.get_clean_data() # Read local embeddings
-            combined_df = combined_df.merge(
-                    processed_notes_df, on=["region", "year_month"], how="inner"
+                processed_notes_df, notes_prediction_cols = notes.get_clean_data(
+                    True, raw_acled_df
                 )
+            else:
+                processed_notes_df, notes_prediction_cols = (
+                    notes.get_clean_data()
+                )  # Read local embeddings
+            combined_df = combined_df.merge(
+                processed_notes_df, on=["region", "year_month"], how="inner"
+            )
             predictor_cols = predictor_cols + notes_prediction_cols
             logger.info("Notes data processed.")
     return combined_df, predictor_cols

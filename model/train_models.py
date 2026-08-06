@@ -1,31 +1,36 @@
-from utils.data_prep import split_data, calculate_conflict_ratio
-from utils.dates import *
+import logging
+from typing import Any
+
+import numpy as np
+import pandas as pd
+import xgboost as xgb
+from sklearn.metrics import (
+    average_precision_score,
+    classification_report,
+    precision_recall_curve,
+)
+from sklearn.model_selection import RandomizedSearchCV
+
+from processing.acled_text_processing import apply_pca_train_only
 from utils.cross_validation import (
     grouped_timeseries_cv_ids,
-    verify_cv_splits,
     timeseries_cross_val_predict,
+    verify_cv_splits,
 )
-from processing.acled_text_processing import apply_pca_train_only
-
-from typing import Any
-import pandas as pd
-import numpy as np
-import xgboost as xgb
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.metrics import precision_recall_curve, classification_report, average_precision_score
-
-import logging
+from utils.data_prep import calculate_conflict_ratio, split_data
+from utils.dates import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Train model")
 logger.setLevel(logging.INFO)
 
+
 def train_evaluate_model(
-        processed_df: pd.DataFrame,
-        predictor_cols: list[str],
-        params: dict[str, Any],
-        best_params: bool = False,
-        use_pca: bool = True
+    processed_df: pd.DataFrame,
+    predictor_cols: list[str],
+    params: dict[str, Any],
+    best_params: bool = False,
+    use_pca: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
@@ -58,9 +63,13 @@ def train_evaluate_model(
     """
     # ---- Input Validation
     if not isinstance(processed_df, pd.DataFrame):
-        raise TypeError(f"processed_df must be a pandas DataFrame, got {type(processed_df).__name__}")
+        raise TypeError(
+            f"processed_df must be a pandas DataFrame, got {type(processed_df).__name__}"
+        )
 
-    if not isinstance(predictor_cols, list) or not all(isinstance(c, str) for c in predictor_cols):
+    if not isinstance(predictor_cols, list) or not all(
+        isinstance(c, str) for c in predictor_cols
+    ):
         raise TypeError("predictor_cols must be a list of strings")
 
     if not predictor_cols:
@@ -68,10 +77,14 @@ def train_evaluate_model(
 
     missing_cols = [col for col in predictor_cols if col not in processed_df.columns]
     if missing_cols:
-        raise ValueError(f"The following predictor columns are missing from processed_df: {missing_cols}")
+        raise ValueError(
+            f"The following predictor columns are missing from processed_df: {missing_cols}"
+        )
 
     if "year_month" not in processed_df.columns:
-        raise ValueError("processed_df must contain a 'year_month' column for time-series splitting")
+        raise ValueError(
+            "processed_df must contain a 'year_month' column for time-series splitting"
+        )
 
     if not isinstance(params, dict):
         raise TypeError(f"params must be a dictionary, got {type(params).__name__}")
@@ -79,10 +92,14 @@ def train_evaluate_model(
     required_params = {"k", "n_splits", "event_col"}
     missing_params = required_params - params.keys()
     if missing_params:
-        raise ValueError(f"params dictionary is missing required keys: {missing_params}")
+        raise ValueError(
+            f"params dictionary is missing required keys: {missing_params}"
+        )
 
     if not isinstance(best_params, bool):
-        raise TypeError(f"best_params must be a boolean, got {type(best_params).__name__}")
+        raise TypeError(
+            f"best_params must be a boolean, got {type(best_params).__name__}"
+        )
 
     if not isinstance(use_pca, bool):
         raise TypeError(f"use_pca must be a boolean, got {type(use_pca).__name__}")
@@ -91,13 +108,22 @@ def train_evaluate_model(
 
     # Still includes emb
     train_df, y_train, _ = split_data(
-        processed_df, predictor_cols, train_start_date, train_end_date,
+        processed_df,
+        predictor_cols,
+        train_start_date,
+        train_end_date,
     )
     onset_df, y_onset, _ = split_data(
-        processed_df, predictor_cols, onset_start_date, onset_end_date,
+        processed_df,
+        predictor_cols,
+        onset_start_date,
+        onset_end_date,
     )
     active_df, y_active, _ = split_data(
-        processed_df, predictor_cols, active_start_date, active_end_date,
+        processed_df,
+        predictor_cols,
+        active_start_date,
+        active_end_date,
     )
 
     if use_pca:

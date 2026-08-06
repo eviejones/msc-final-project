@@ -1,12 +1,11 @@
 import logging
-from typing import List, Tuple, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
 from dotenv import load_dotenv
 from sklearn.decomposition import PCA
-from transformers import AutoTokenizer, AutoModel, PreTrainedTokenizer, PreTrainedModel
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 from utils.dates import *
 
@@ -21,14 +20,14 @@ def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
     """
     Removes date references from the 'notes' column and drops duplicate entries.
 
-    Uses regex to identify and strip out date prefixes, month/day ranges, 
+    Uses regex to identify and strip out date prefixes, month/day ranges,
     and years from the beginning of the text notes. The regex pattern was produced by AI.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing a 'notes' column.
 
     Returns:
-        pd.DataFrame: A cleaned DataFrame with duplicates removed and a new 
+        pd.DataFrame: A cleaned DataFrame with duplicates removed and a new
             'notes_cleaned' column containing the parsed text.
     """
     # 1. Define the building blocks
@@ -49,12 +48,14 @@ def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
     final_pattern = rf"(?i)^\s*(?:{between_format}|(?:{prefixes})?{date_format})(?:\s*[,.]\s*|\s+|$)"
 
     original_len = len(df)
-    df_cleaned = df.drop_duplicates(subset=['notes']).copy()
+    df_cleaned = df.drop_duplicates(subset=["notes"]).copy()
     new_len = len(df_cleaned)
     logger.info(f"Duplicates in notes column deleted: {original_len - new_len}")
 
     # 4. Apply to your dataframe
-    df_cleaned["notes_cleaned"] = df_cleaned["notes"].str.replace(final_pattern, "", regex=True)
+    df_cleaned["notes_cleaned"] = df_cleaned["notes"].str.replace(
+        final_pattern, "", regex=True
+    )
     return df_cleaned
 
 
@@ -69,7 +70,9 @@ def check_max_tokens(tokenizer: PreTrainedTokenizer, df: pd.DataFrame) -> None:
     Raises:
         ValueError: If any entry in 'notes_cleaned' exceeds 512 tokens.
     """
-    token_lengths = [len(tokenizer.encode(note)) for note in df["notes_cleaned"].dropna()]
+    token_lengths = [
+        len(tokenizer.encode(note)) for note in df["notes_cleaned"].dropna()
+    ]
 
     logger.info(f"Average tokens: {sum(token_lengths) / len(token_lengths)}")
     logger.info(f"Max tokens: {max(token_lengths)}")
@@ -77,10 +80,14 @@ def check_max_tokens(tokenizer: PreTrainedTokenizer, df: pd.DataFrame) -> None:
     exceeding_count = sum(1 for t in token_lengths if t > 512)
 
     if exceeding_count > 0:
-        raise ValueError(f"Token limit exceeded: {exceeding_count} notes have more than 512 tokens.")
+        raise ValueError(
+            f"Token limit exceeded: {exceeding_count} notes have more than 512 tokens."
+        )
 
 
-def get_embedding(text: str, tokenizer: PreTrainedTokenizer, model: PreTrainedModel) -> List[float]:
+def get_embedding(
+    text: str, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
+) -> list[float]:
     """
     Generates a mean-pooled embedding for a single text string using ConfliBERT.
 
@@ -101,15 +108,13 @@ def get_embedding(text: str, tokenizer: PreTrainedTokenizer, model: PreTrainedMo
 
 
 def get_monthly_regional_embeddings(
-        df: pd.DataFrame,
-        tokenizer: PreTrainedTokenizer,
-        model: PreTrainedModel
+    df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
 ) -> pd.DataFrame:
     """
     Calculates document embeddings and aggregates them by region ('admin1') and month.
 
     Note:
-        Assumes `train_start_date` and `end_date` are globally available (e.g., imported 
+        Assumes `train_start_date` and `end_date` are globally available (e.g., imported
         from `utils.dates`).
 
     Args:
@@ -121,37 +126,43 @@ def get_monthly_regional_embeddings(
         pd.DataFrame: A DataFrame with mean embeddings grouped by region and month,
             filtered by the global training date constraints.
     """
-    logger.warning(f"Calculating embeddings for {len(df)} rows. This might take a while.")
+    logger.warning(
+        f"Calculating embeddings for {len(df)} rows. This might take a while."
+    )
 
     df["notes_embeddings"] = None
-    df["notes_embeddings"] = df["notes_cleaned"].apply(get_embedding, args=(tokenizer, model))
+    df["notes_embeddings"] = df["notes_cleaned"].apply(
+        get_embedding, args=(tokenizer, model)
+    )
 
     # Expand the list of embeddings into separate columns
     embedding_cols = pd.DataFrame(df["notes_embeddings"].tolist(), index=df.index)
     embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
 
     df_expanded = pd.concat([df[["admin1", "year_month"]], embedding_cols], axis=1)
-    df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep='first')]
+    df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
 
     # Group by region and month, then average the embeddings
-    monthly_region_embeddings = df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
+    monthly_region_embeddings = (
+        df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
+    )
 
     # Filter by dates (train_start_date and end_date imported from utils.dates)
     df_final = monthly_region_embeddings[
-        (monthly_region_embeddings["year_month"] >= train_start_date) &
-        (monthly_region_embeddings["year_month"] <= end_date)
-        ].copy()
+        (monthly_region_embeddings["year_month"] >= train_start_date)
+        & (monthly_region_embeddings["year_month"] <= end_date)
+    ].copy()
 
     return df_final
 
 
 def apply_pca_train_only(
-        train_df: pd.DataFrame,
-        onset_df: pd.DataFrame,
-        active_df: pd.DataFrame,
-        predictor_cols: List[str],
-        variance_threshold: float = 0.90
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, List[str]]:
+    train_df: pd.DataFrame,
+    onset_df: pd.DataFrame,
+    active_df: pd.DataFrame,
+    predictor_cols: list[str],
+    variance_threshold: float = 0.90,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, list[str]]:
     """
     Fits a PCA model on the training dataset to prevent data leakage,
     then transforms the training, onset, and active datasets.
@@ -161,11 +172,11 @@ def apply_pca_train_only(
         onset_df (pd.DataFrame): Onset dataset containing embedding columns.
         active_df (pd.DataFrame): Active dataset containing embedding columns.
         predictor_cols (List[str]): List of all predictor column names.
-        variance_threshold (float, optional): The target cumulative variance 
+        variance_threshold (float, optional): The target cumulative variance
             to retain. Defaults to 0.90.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, List[str]]: 
+        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, List[str]]:
             A tuple containing:
             - The transformed train DataFrame.
             - The transformed onset DataFrame.
@@ -192,8 +203,10 @@ def apply_pca_train_only(
     def rebuild(df: pd.DataFrame, emb_pca_array: np.ndarray) -> pd.DataFrame:
         """Helper to stitch non-embedding columns back with PCA components."""
         pcs = pd.DataFrame(emb_pca_array, columns=pc_names, index=df.index)
-        return pd.concat([df[non_emb_cols].reset_index(drop=True),
-                          pcs.reset_index(drop=True)], axis=1)
+        return pd.concat(
+            [df[non_emb_cols].reset_index(drop=True), pcs.reset_index(drop=True)],
+            axis=1,
+        )
 
     X_train = rebuild(train_df, X_train_emb_pca)
     X_onset = rebuild(onset_df, X_onset_emb_pca)
@@ -205,11 +218,11 @@ def apply_pca_train_only(
 
 def full_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Creates a balanced panel dataset for all regions and months, imputes missing 
+    Creates a balanced panel dataset for all regions and months, imputes missing
     values with global means, and lags embeddings by one month.
 
     Args:
-        df (pd.DataFrame): The input DataFrame containing 'region', 'year_month', 
+        df (pd.DataFrame): The input DataFrame containing 'region', 'year_month',
             and embedding features.
 
     Returns:
@@ -227,15 +240,15 @@ def full_dataset(df: pd.DataFrame) -> pd.DataFrame:
         [all_regions, all_months], names=["region", "year_month"]
     )
     df_grouped = (
-        df.set_index(["region", "year_month"])
-        .reindex(full_index)
-        .reset_index()
+        df.set_index(["region", "year_month"]).reindex(full_index).reset_index()
     )
 
     emb_cols = [c for c in df_grouped.columns if c.startswith("emb_")]
 
     global_mean = df[emb_cols].mean()
-    df_grouped[emb_cols] = df_grouped[emb_cols].fillna(global_mean)  # TODO Check this logic
+    df_grouped[emb_cols] = df_grouped[emb_cols].fillna(
+        global_mean
+    )  # TODO Check this logic
 
     df_grouped = df_grouped.sort_values(by=["region", "year_month"])
 
@@ -246,21 +259,20 @@ def full_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_clean_data(
-        calculate: bool = False,
-        df: Optional[pd.DataFrame] = None
-) -> Tuple[pd.DataFrame, List[str]]:
+    calculate: bool = False, df: pd.DataFrame | None = None
+) -> tuple[pd.DataFrame, list[str]]:
     """
-    Main orchestration function to clean data, generate or load embeddings, 
+    Main orchestration function to clean data, generate or load embeddings,
     balance the panel dataset, and extract predictor columns.
 
     Args:
-        calculate (bool, optional): If True, computes embeddings from scratch using 
+        calculate (bool, optional): If True, computes embeddings from scratch using
             ConfliBERT. If False, loads pre-computed embeddings from disk. Defaults to False.
-        df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if `calculate` 
+        df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if `calculate`
             is True. Defaults to None.
 
     Returns:
-        Tuple[pd.DataFrame, List[str]]: A tuple containing the final processed 
+        Tuple[pd.DataFrame, List[str]]: A tuple containing the final processed
             DataFrame and a list of predictor column names.
     """
     if calculate:

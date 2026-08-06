@@ -1,8 +1,10 @@
-import pandas as pd
+import logging
+
 import numpy as np
+import pandas as pd
+
 from ingest.acled_client import AcledClient
 from utils.dates import *
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ACLED processing")
@@ -198,7 +200,9 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(download=True, remove_abyei=True, k: float = 0.5, event_col: str = "event_type"):
+def get_clean_data(
+    download=True, remove_abyei=True, k: float = 0.5, event_col: str = "event_type"
+):
     if download:
         acled = AcledClient()
         all_data = acled.get_data(countries, start_date, end_date)
@@ -209,7 +213,5 @@ def get_clean_data(download=True, remove_abyei=True, k: float = 0.5, event_col: 
         all_data = all_data[
             ~all_data["admin1"].str.lower().str.contains("abyei", na=False)
         ]
-    processed_df, predictor_cols = pre_process_data(
-        all_data, k, event_col
-    )
+    processed_df, predictor_cols = pre_process_data(all_data, k, event_col)
     return processed_df, predictor_cols, all_data
