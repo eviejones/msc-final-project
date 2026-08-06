@@ -1,8 +1,9 @@
 import logging
 import os
 import zipfile
-import pandas as pd
+
 import geopandas as gpd
+import pandas as pd
 from hdx.api.configuration import Configuration
 from hdx.data.dataset import Dataset
 

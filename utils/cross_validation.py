@@ -1,9 +1,9 @@
+import logging
+
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit
 from sklearn.base import clone
-
-import logging
+from sklearn.model_selection import TimeSeriesSplit
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Cross validation")

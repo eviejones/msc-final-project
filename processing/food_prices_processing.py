@@ -1,9 +1,10 @@
+import logging
+
 import pandas as pd
+
 from ingest.hdx_client import HdxClient
 from utils.dates import *
 from utils.name_mapping import *
-
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("WFP Processing")

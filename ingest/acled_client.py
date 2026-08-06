@@ -1,9 +1,9 @@
+import logging
 import os
+from datetime import datetime
+
 import pandas as pd
 import requests
-import json
-from datetime import datetime
-import logging
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
@@ -68,7 +68,7 @@ class AcledClient:
                 raise ValueError(
                     "Dates must be provided in the format YYYY-MM-DD."
                 ) from e
-            raise e
+            raise
 
     def _validate_countries(self, countries: list[str] | str) -> None:
         """Validates that country names are non-empty strings with recognised characters."""

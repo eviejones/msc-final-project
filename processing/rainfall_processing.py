@@ -1,9 +1,10 @@
+import logging
+
 import pandas as pd
+
 from ingest.hdx_client import HdxClient
 from utils.dates import *
-from utils.name_mapping import clean_state_names, SUDAN_PCODE_MAPPING
-
-import logging
+from utils.name_mapping import SUDAN_PCODE_MAPPING, clean_state_names
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Rainfall Processing")

@@ -1,18 +1,19 @@
 # %%
-import pandas as pd
-from ingest.acled_client import AcledClient
-import numpy as np
-import xgboost as xgb
 import logging
+
 import mlflow
-from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
+import numpy as np
+import pandas as pd
+import xgboost as xgb
+from sklearn.base import clone
 from sklearn.metrics import (
     average_precision_score,
     classification_report,
     precision_recall_curve,
 )
-from sklearn.base import clone
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, TimeSeriesSplit
+
+from ingest.acled_client import AcledClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -395,13 +396,13 @@ def train_evaluate_model(all_data, params):
         train_start_date,
         train_end_date,
     )
-    onset_df, y_onset, X_onset = split_data(
+    _onset_df, y_onset, X_onset = split_data(
         processed_df,
         predictor_cols,
         onset_start_date,
         onset_end_date,
     )
-    active_df, y_active, X_active = split_data(
+    _active_df, y_active, X_active = split_data(
         processed_df,
         predictor_cols,
         active_start_date,
