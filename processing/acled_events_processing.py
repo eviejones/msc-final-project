@@ -19,7 +19,9 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
      Args:
          df (pd.DataFrame): The full ACLED dataframe
     Returns:
-        pd.DataFrame: The dataframe with am additional column 'conflict' with binary markers.
+        pd.DataFrame: The dataframe with an additional column 'conflict' with binary markers.
+    Raises:
+        ValueError: If 'sub_event_type' contains values not present in the mapping.
     """
 
     acled_subevent_mapping = {
@@ -55,8 +57,14 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
         "Non-violent transfer of territory": 0,
         "Other": 0,
     }
-    df["conflict"] = df["sub_event_type"].apply(lambda x: acled_subevent_mapping[x])
-    return df  # TODO add validation
+    unmapped_events = set(df["sub_event_type"]) - set(acled_subevent_mapping.keys())
+
+    if unmapped_events:
+        raise ValueError(f"Unmapped sub_event_type(s) found in DataFrame: {unmapped_events}")
+
+    df["conflict"] = df["sub_event_type"].map(acled_subevent_mapping)
+
+    return df
 
 
 def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame:
