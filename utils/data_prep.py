@@ -2,7 +2,7 @@ import pandas as pd
 import processing.acled_events_processing as acled
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
-import processing.notes_processing as notes
+import processing.acled_text_processing as notes
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -11,7 +11,8 @@ logger.setLevel(logging.INFO)
 
 
 def calculate_conflict_ratio(df: pd.DataFrame) -> dict:
-    """Calculates the number of regions where there was a monthly escalation.
+    """
+    Calculates the number of regions where there was a monthly escalation.
 
     Args:
         df (pd.DataFrame): Processed data.
@@ -56,7 +57,6 @@ def split_data(
 
     return split_df, y, X
 
-
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
     download: bool = False,
@@ -78,13 +78,46 @@ def get_clean_combined_data(
             instead of using cached versions. Defaults to False.
         remove_abyei (bool, optional): If True, filters out data for the Abyei
             region. Defaults to True.
+        k (float): The number of standard deviations above the mean to set the
+            target threshold. Defaults to 0.5.
+        event_col (str): Whether to use event_type or sub_event_type column. Defaults to event_type.
 
     Returns:
-            combined_df (pd.DataFrame): The merged dataset.
-            predictor_cols (list[str]): A complete list of predictor column
-            names from all merged datasets.
+        combined_df (pd.DataFrame): The merged dataset.
+        predictor_cols (list[str]): A complete list of predictor column
+        names from all merged datasets.
     """
-    # Always fetch ACLED as the base dataset
+    # ---- Validate inputs
+    # Validate data_sources
+    if data_sources is not None:
+        if not isinstance(data_sources, list):
+            raise TypeError(f"data_sources must be a list or None, got {type(data_sources).__name__}")
+
+        valid_sources = {"food", "rain", "text"}
+        sources_lower = [source.lower() for source in data_sources]
+        invalid_sources = [src for src in sources_lower if src not in valid_sources]
+
+        if invalid_sources:
+            raise ValueError(
+                f"Invalid data_sources provided: {invalid_sources}. "
+                f"Allowed sources are: {list(valid_sources)}"
+            )
+
+    # Validate k
+    if not isinstance(k, (int, float)):
+        raise TypeError(f"k must be a numeric value (float or int), got {type(k).__name__}")
+    if k > 2:
+        raise ValueError(f"k must be less than or equal to 2, got {k}")
+
+    # Validate event_col
+    valid_event_cols = {"event_type", "sub_event_type"}
+    if event_col not in valid_event_cols:
+        raise ValueError(
+            f"Invalid event_col: '{event_col}'. "
+            f"Allowed values are: {valid_event_cols}"
+        )
+
+    # ---- Fetch data (always fetch ACLED as the base dataset)
     processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
         download,
         remove_abyei,
