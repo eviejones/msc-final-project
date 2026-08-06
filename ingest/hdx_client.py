@@ -1,4 +1,3 @@
-import logging
 import os
 import zipfile
 
@@ -7,9 +6,9 @@ import pandas as pd
 from hdx.api.configuration import Configuration
 from hdx.data.dataset import Dataset
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Hdx Ingest")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("Train model")
 
 
 class HdxClient:

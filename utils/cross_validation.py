@@ -1,13 +1,11 @@
-import logging
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.model_selection import TimeSeriesSplit
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Cross validation")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("Cross validation")
 
 
 def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):

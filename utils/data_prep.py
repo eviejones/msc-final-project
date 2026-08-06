@@ -1,5 +1,3 @@
-import logging
-
 import pandas as pd
 
 import processing.acled_events_processing as acled
@@ -7,9 +5,9 @@ import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Data preparation")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("Data preparation")
 
 
 def calculate_conflict_ratio(df: pd.DataFrame) -> dict:

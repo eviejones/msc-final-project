@@ -19,10 +19,9 @@ from utils.cross_validation import (
 )
 from utils.data_prep import calculate_conflict_ratio, split_data
 from utils.dates import *
+from utils.logger import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Train model")
-logger.setLevel(logging.INFO)
+get_logger("Train model")
 
 
 def train_evaluate_model(

@@ -1,14 +1,12 @@
-import logging
-
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
 from utils.dates import *
 from utils.name_mapping import *
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("WFP Processing")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("WFP Processing")
 
 
 def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:

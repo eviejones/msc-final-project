@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 
@@ -6,9 +5,9 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("ACLED Client")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("ACLED ingest")
 
 
 # Ref: https://stackoverflow.com/questions/60435406/which-exception-should-be-raised-when-a-required-environment-variable-is-missing

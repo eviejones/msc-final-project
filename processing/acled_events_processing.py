@@ -1,14 +1,11 @@
-import logging
-
 import numpy as np
 import pandas as pd
 
 from ingest.acled_client import AcledClient
 from utils.dates import *
+from utils.logger import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("ACLED processing")
-logger.setLevel(logging.INFO)
+get_logger("Events processing")
 
 
 def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
@@ -60,7 +57,9 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
     unmapped_events = set(df["sub_event_type"]) - set(acled_subevent_mapping.keys())
 
     if unmapped_events:
-        raise ValueError(f"Unmapped sub_event_type(s) found in DataFrame: {unmapped_events}")
+        raise ValueError(
+            f"Unmapped sub_event_type(s) found in DataFrame: {unmapped_events}"
+        )
 
     df["conflict"] = df["sub_event_type"].map(acled_subevent_mapping)
 

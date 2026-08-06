@@ -1,14 +1,12 @@
-import logging
-
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
 from utils.dates import *
 from utils.name_mapping import SUDAN_PCODE_MAPPING, clean_state_names
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Rainfall Processing")
-logger.setLevel(logging.INFO)
+from utils.logger import get_logger
+
+get_logger("Rainfall processing")
 
 
 # TODO: Figure this out because I don't get Abyei

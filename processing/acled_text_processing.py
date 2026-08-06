@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pandas as pd
 import torch
@@ -8,10 +6,9 @@ from sklearn.decomposition import PCA
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 from utils.dates import *
+from utils.logger import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("ACLED text processing")
-logger.setLevel(logging.INFO)
+get_logger("Text processing")
 
 load_dotenv()
 
@@ -48,7 +45,11 @@ def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
     final_pattern = rf"(?i)^\s*(?:{between_format}|(?:{prefixes})?{date_format})(?:\s*[,.]\s*|\s+|$)"
 
     original_len = len(df)
-    df_cleaned = df.drop_duplicates(subset=["notes"]).copy()
+    df_cleaned = (
+        df.dropna(subset=["notes"])
+        .drop_duplicates(subset=["admin1", "year_month", "notes"])
+        .copy()
+    )
     new_len = len(df_cleaned)
     logger.info(f"Duplicates in notes column deleted: {original_len - new_len}")
 
