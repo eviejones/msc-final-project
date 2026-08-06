@@ -5,3 +5,4 @@ data
 model/mlruns
 model/mlflow.db
 ingest/chirps_cache
+archive
