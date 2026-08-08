@@ -6,7 +6,7 @@ from utils.name_mapping import SUDAN_PCODE_MAPPING, clean_state_names
 
 from utils.logger import get_logger
 
-get_logger("Rainfall processing")
+logger = get_logger("Rainfall processing")
 
 
 # TODO: Figure this out because I don't get Abyei
@@ -64,9 +64,6 @@ def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFr
         rainfall_combined = pd.concat(
             [rainfall_sudan_admin1, rainfall_abyei], ignore_index=True
         )
-        print("South Sudan PCODE sample:", rainfall_ss_admin1["PCODE"].head().tolist())
-        print("South Sudan columns:", rainfall_ss_admin1.columns.tolist())
-
     rainfall_combined = rainfall_combined.dropna(subset=["region"])
     rainfall_combined["date"] = pd.to_datetime(rainfall_combined["date"])
     rainfall_combined["year_month"] = rainfall_combined["date"].dt.to_period("M")
@@ -74,7 +71,7 @@ def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFr
     return rainfall_combined
 
 
-def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
+def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     """Processes the raw rainfall dataset to calculate monthly regional anomalies.
 
     This function filters the dataset within the global start and end dates,
@@ -89,19 +86,28 @@ def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: A processed DataFrame indexed by region and year_month,
         containing the shifted rainfall anomalies.
     """
+    start_period = pd.Period(train_start_date, freq="M")
+    padded_start = start_period - 1 # Need an extra month of data to be able to shift
+
     df = df_rainfall[
-        (df_rainfall["year_month"] >= start_date)
+        (df_rainfall["year_month"] >= padded_start)
         & (df_rainfall["year_month"] <= end_date)
     ].copy()
 
     df_grouped = df.groupby(["region", "year_month"])["r3q"].median().reset_index()
 
-    all_regions = df_grouped["region"].unique()
-    all_months = pd.period_range(
-        df_grouped["year_month"].min(), df_grouped["year_month"].max(), freq="M"
-    )
+    if all_regions is None:
+        all_regions = df_grouped["region"].unique()
+
+    if all_months is None:
+        max_month = df_grouped["year_month"].max()
+    else:
+        max_month = all_months.max()
+
+    padded_all_months = pd.period_range(padded_start, max_month, freq="M")
+
     full_index = pd.MultiIndex.from_product(
-        [all_regions, all_months],
+        [all_regions, padded_all_months],
         names=["region", "year_month"],
     )
     df_expanded = (
@@ -117,11 +123,13 @@ def process_rainfall(df_rainfall: pd.DataFrame) -> pd.DataFrame:
         "rainfall_3m_anomaly"
     ].shift(1)
 
+    df_expanded = df_expanded[df_expanded["year_month"] >= start_period].copy() # Remove additional month so first month is not NaN
+
     return df_expanded
 
 
 def get_clean_data(
-    download: bool = True, remove_abyei: bool = True
+    download: bool = True, remove_abyei: bool = True, all_regions = None, all_months = None
 ) -> tuple[pd.DataFrame, list[str]]:
     """Orchestrates the reading and processing of rainfall data.
 
@@ -139,8 +147,8 @@ def get_clean_data(
             - A list of predictor column names (e.g., ["rainfall_3m_anomaly"]).
     """
     rainfall_df = read_rainfall(download, remove_abyei)
-    processed_df = process_rainfall(rainfall_df)
-    processed_df["rainfall_3m_anomaly"] = processed_df["rainfall_3m_anomaly"].fillna(0)
+    processed_df = process_rainfall(rainfall_df, all_regions, all_months)
+    processed_df["rainfall_3m_anomaly"] = processed_df["rainfall_3m_anomaly"]
 
     predictor_cols = ["rainfall_3m_anomaly"]
     return processed_df, predictor_cols
