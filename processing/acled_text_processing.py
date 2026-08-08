@@ -8,7 +8,7 @@ from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTo
 from utils.dates import *
 from utils.logger import get_logger
 
-get_logger("Text processing")
+logger = get_logger("Text processing")
 
 load_dotenv()
 
@@ -148,11 +148,13 @@ def get_monthly_regional_embeddings(
         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
     )
 
-    # Filter by dates (train_start_date and end_date imported from utils.dates)
+    start_period = pd.Period(train_start_date, freq="M")
+    padded_start = start_period - 1
+
     df_final = monthly_region_embeddings[
-        (monthly_region_embeddings["year_month"] >= train_start_date)
+        (monthly_region_embeddings["year_month"] >= padded_start)
         & (monthly_region_embeddings["year_month"] <= end_date)
-    ].copy()
+        ].copy()
 
     return df_final
 
@@ -217,7 +219,7 @@ def apply_pca_train_only(
     return X_train, X_onset, X_active, pca, final_predictor_cols
 
 
-def full_dataset(df: pd.DataFrame) -> pd.DataFrame:
+def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     """
     Creates a balanced panel dataset for all regions and months, imputes missing
     values with global means, and lags embeddings by one month.
@@ -232,35 +234,47 @@ def full_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
 
-    all_regions = df["region"].unique()
-    all_months = pd.period_range(
-        df["year_month"].min(), df["year_month"].max(), freq="M"
-    )
+    start_period = pd.Period(train_start_date, freq="M")
+    padded_start = start_period - 1
+
+    if all_months is None:
+        max_month = df["year_month"].max()
+    else:
+        max_month = all_months.max()
+
+    padded_all_months = pd.period_range(padded_start, max_month, freq="M")
 
     full_index = pd.MultiIndex.from_product(
-        [all_regions, all_months], names=["region", "year_month"]
+        [all_regions, padded_all_months], names=["region", "year_month"]
     )
+
     df_grouped = (
         df.set_index(["region", "year_month"]).reindex(full_index).reset_index()
     )
 
     emb_cols = [c for c in df_grouped.columns if c.startswith("emb_")]
 
-    global_mean = df[emb_cols].mean()
-    df_grouped[emb_cols] = df_grouped[emb_cols].fillna(
-        global_mean
-    )  # TODO Check this logic
+    # Create a col to flag if there are actually 0 events
+    df_grouped["has_acled_event"] = df_grouped[emb_cols[0]].notna().astype(int)
+
+    df_grouped[emb_cols] = df_grouped[emb_cols].fillna(0.0)
 
     df_grouped = df_grouped.sort_values(by=["region", "year_month"])
 
-    # Lag embeddings by 1 month per region
     df_grouped[emb_cols] = df_grouped.groupby("region")[emb_cols].shift(1)
+    df_grouped["has_acled_event"] = df_grouped.groupby("region")["has_acled_event"].shift(1)
 
-    return df_grouped  # TODO move this function to a util as used by other parts of the scripts
+    # Shifting adds NaNs back in so need to fill again
+    df_grouped[emb_cols] = df_grouped[emb_cols].fillna(0.0)
+    df_grouped["has_acled_event"] = (
+        df_grouped["has_acled_event"].fillna(0).astype(int)
+    )
+    df_grouped = df_grouped[df_grouped["year_month"] >= start_period].copy() # Remove buffered data
 
+    return df_grouped
 
 def get_clean_data(
-    calculate: bool = False, df: pd.DataFrame | None = None
+    calculate: bool = False, df: pd.DataFrame | None = None, all_regions = None, all_months = None
 ) -> tuple[pd.DataFrame, list[str]]:
     """
     Main orchestration function to clean data, generate or load embeddings,
@@ -293,7 +307,16 @@ def get_clean_data(
         df_monthly = pd.read_pickle("../data/monthly_regional_embeddigs.pkl")
         df_monthly = df_monthly.rename(columns={"admin1": "region"})
 
-    df_final = full_dataset(df_monthly)
+    if all_regions is None:
+        all_regions = df_monthly["region"].unique()
+
+    if all_months is None:
+        # Assumes year_month is already a datetime or period object in df_monthly
+        all_months = pd.period_range(
+            df_monthly["year_month"].min(), df_monthly["year_month"].max(), freq="M"
+        )
+    df_final = full_dataset(df_monthly, all_regions, all_months)
     predictor_cols = [c for c in df_final.columns if c.startswith("emb_")]
+    predictor_cols.append("has_acled_event")
 
     return df_final, predictor_cols
