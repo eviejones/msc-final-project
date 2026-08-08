@@ -8,7 +8,7 @@ from hdx.data.dataset import Dataset
 
 from utils.logger import get_logger
 
-get_logger("Train model")
+logger = get_logger("Train model")
 
 
 class HdxClient:

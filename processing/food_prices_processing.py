@@ -132,7 +132,7 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
 
     df_expanded["usdprice_per_kg"] = df_expanded.groupby(["admin1", "commodity"])[
         "usdprice_per_kg"
-    ].transform(lambda x: x.ffill().bfill())
+    ].transform(lambda x: x.ffill())
 
     df_pivoted = df_expanded.pivot(
         index=["admin1", "year_month"],

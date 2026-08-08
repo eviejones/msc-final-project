@@ -23,7 +23,6 @@ from utils.logger import get_logger
 
 get_logger("Train model")
 
-
 def train_evaluate_model(
     processed_df: pd.DataFrame,
     predictor_cols: list[str],
