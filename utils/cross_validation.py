@@ -5,7 +5,7 @@ from sklearn.model_selection import TimeSeriesSplit
 
 from utils.logger import get_logger
 
-get_logger("Cross validation")
+logger = get_logger("Cross validation")
 
 
 def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):
