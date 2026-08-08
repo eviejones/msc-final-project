@@ -6,7 +6,7 @@ from utils.name_mapping import *
 
 from utils.logger import get_logger
 
-get_logger("WFP Processing")
+logger = get_logger("WFP Processing")
 
 
 def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
@@ -80,62 +80,72 @@ def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.Dat
     renamed_df["usdprice_per_kg"] = (
         renamed_df["usdprice"] / renamed_df["unit_weight_in_kg"]
     )
+    renamed_df = renamed_df.rename(columns={"admin1": "region"})
 
     return renamed_df
 
 
-def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
+def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     """Aggregates and pivots food price data to create time-series features.
 
-    This function filters the dataset by global start/end dates, calculates the
-    median monthly price per region and commodity, and ensures a continuous monthly
-    timeline by reindexing. Missing values are filled using forward-fill followed
-    by backward-fill. The data is then pivoted so each commodity is a column, and
-    values are shifted by 1 month to create lag features for predictive modeling.
+    This function filters the dataset starting one month prior to the global
+    start date (for the burn-in buffer), calculates the median monthly price,
+    ensures a continuous monthly timeline, and forward-fills missing gaps.
+    The data is then pivoted, shifted by 1 month to create lag features,
+    and sliced to start exactly at the target training date.
 
     Args:
-        df_prices (pd.DataFrame): The cleaned food prices DataFrame, typically
-            the output from `read_food_prices`.
+        df_prices (pd.DataFrame): The cleaned food prices DataFrame.
+        all_regions: Array-like of all unique regions for the Cartesian spine.
+        all_months: Array-like of all target months for the Cartesian spine.
 
     Returns:
-        pd.DataFrame: A continuous time-series DataFrame indexed by region ('admin1')
-            and 'year_month', featuring 1-month lagged median prices for millet,
-            sorghum, and wheat flour.
+        pd.DataFrame: A continuous time-series DataFrame indexed by region
+            and 'year_month', featuring 1-month lagged median prices.
     """
+    start_period = pd.Period(train_start_date, freq="M") # As it shifts the data by a month we need an extra month before shifting and removing
+    padded_start = start_period - 1
+
     df = df_prices[
-        (df_prices["year_month"] >= start_date) & (df_prices["year_month"] <= end_date)
-    ].copy()
+        (df_prices["year_month"] >= padded_start) & (df_prices["year_month"] <= end_date)
+        ].copy()
 
     df_grouped = (
-        df.groupby(["admin1", "year_month", "commodity"])["usdprice_per_kg"]
+        df.groupby(["region", "year_month", "commodity"])["usdprice_per_kg"]
         .median()
         .reset_index()
     )
 
-    all_regions = df_grouped["admin1"].unique()
-    all_months = pd.period_range(
-        df_grouped["year_month"].min(), df_grouped["year_month"].max(), freq="M"
-    )
+    if all_regions is None:
+        all_regions = df_grouped["region"].unique()
+
+    # 2. Ensure our Cartesian spine includes the padded month
+    if all_months is None:
+        max_month = df_grouped["year_month"].max()
+    else:
+        max_month = all_months.max()
+
+    padded_all_months = pd.period_range(padded_start, max_month, freq="M")
     all_commodities = df_grouped["commodity"].unique()
 
     full_index = pd.MultiIndex.from_product(
-        [all_regions, all_months, all_commodities],
-        names=["admin1", "year_month", "commodity"],
+        [all_regions, padded_all_months, all_commodities],
+        names=["region", "year_month", "commodity"],
     )
 
     df_expanded = (
-        df_grouped.set_index(["admin1", "year_month", "commodity"])
+        df_grouped.set_index(["region", "year_month", "commodity"])
         .reindex(full_index)
         .reset_index()
-        .sort_values(["admin1", "commodity", "year_month"])
+        .sort_values(["region", "commodity", "year_month"])
     )
 
-    df_expanded["usdprice_per_kg"] = df_expanded.groupby(["admin1", "commodity"])[
+    df_expanded["usdprice_per_kg"] = df_expanded.groupby(["region", "commodity"])[
         "usdprice_per_kg"
-    ].transform(lambda x: x.ffill())
+    ].transform(lambda x: x.ffill()) # Forward fill on food data as we can assume that prices remain the same
 
     df_pivoted = df_expanded.pivot(
-        index=["admin1", "year_month"],
+        index=["region", "year_month"],
         columns="commodity",
         values="usdprice_per_kg",
     ).reset_index()
@@ -148,23 +158,32 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame) -> pd.DataFrame:
             "Wheat flour": "price_wheat_flour",
         }
     )
+
     price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
-    df_pivoted[price_cols] = df_pivoted.groupby("admin1")[price_cols].shift(1)
+
+    df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
+
+    # Remove padded month
+    df_pivoted = df_pivoted[df_pivoted["year_month"] >= start_period].copy()
+
     return df_pivoted
 
 
-def get_clean_data(download: bool = True, remove_abyei: bool = True):
+def get_clean_data(download: bool = True, remove_abyei: bool = True, all_regions=None, all_months=None):
     """An orchestrator function that runs the full food price data pipeline.
 
-    This function calls the read and process functions in sequence, renames
-    the geography column to a standard 'region' name, and replaces any
-    remaining NaN values in the feature columns with 0.
+    This function calls the read and process functions in sequence, and extracts
+    a list of predictor column names for downstream modelling. Any leading missing
+    values are intentionally left as NaN to be handled natively by XGBoost's
+    sparsity-aware split finding.
 
     Args:
         download (bool, optional): Indicates whether to download fresh data
             from HDX. Defaults to True.
         remove_abyei (bool, optional): Indicates whether to exclude Abyei market
             data from South Sudan. Defaults to True.
+        all_regions (array-like, optional): Array of all unique regions for the Cartesian spine.
+        all_months (array-like, optional): Array of all target months for the Cartesian spine.
 
     Returns:
         tuple: A tuple containing:
@@ -173,11 +192,10 @@ def get_clean_data(download: bool = True, remove_abyei: bool = True):
               variables (the lagged price features).
     """
     food_prices_df = read_food_prices(download, remove_abyei)
-    pivoted_df = process_and_pivot_food_prices(food_prices_df)
-    pivoted_df = pivoted_df.rename(columns={"admin1": "region"})
+    pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
 
     predictor_cols = [
         col for col in pivoted_df.columns if col not in ["region", "year_month"]
     ]
-    pivoted_df[predictor_cols] = pivoted_df[predictor_cols].fillna(0)
+
     return pivoted_df, predictor_cols
