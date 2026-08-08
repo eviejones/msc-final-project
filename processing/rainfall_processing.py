@@ -1,7 +1,7 @@
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
-from utils.dates import *
+from utils.dates import get_padded_index, train_start_date, end_date
 from utils.name_mapping import SUDAN_PCODE_MAPPING, clean_state_names
 
 from utils.logger import get_logger
@@ -86,33 +86,32 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
         pd.DataFrame: A processed DataFrame indexed by region and year_month,
         containing the shifted rainfall anomalies.
     """
-    start_period = pd.Period(train_start_date, freq="M")
-    padded_start = start_period - 1 # Need an extra month of data to be able to shift
+    # df = df_rainfall[
+    #     (df_rainfall["year_month"] >= padded_start)
+    #     & (df_rainfall["year_month"] <= end_date)
+    # ].copy()
 
-    df = df_rainfall[
-        (df_rainfall["year_month"] >= padded_start)
-        & (df_rainfall["year_month"] <= end_date)
-    ].copy()
+    df_grouped = df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
 
-    df_grouped = df.groupby(["region", "year_month"])["r3q"].median().reset_index()
+    df_padded, full_padded_index, start_period = get_padded_index(df_grouped, all_regions, all_months, train_start_date)
 
-    if all_regions is None:
-        all_regions = df_grouped["region"].unique()
+    # if all_regions is None:
+    #     all_regions = df_grouped["region"].unique()
+    #
+    # if all_months is None:
+    #     max_month = df_grouped["year_month"].max()
+    # else:
+    #     max_month = all_months.max()
 
-    if all_months is None:
-        max_month = df_grouped["year_month"].max()
-    else:
-        max_month = all_months.max()
-
-    padded_all_months = pd.period_range(padded_start, max_month, freq="M")
-
-    full_index = pd.MultiIndex.from_product(
-        [all_regions, padded_all_months],
-        names=["region", "year_month"],
-    )
+    # padded_all_months = pd.period_range(padded_start, max_month, freq="M")
+    #
+    # full_index = pd.MultiIndex.from_product(
+    #     [all_regions, padded_all_months],
+    #     names=["region", "year_month"],
+    # )
     df_expanded = (
-        df_grouped.set_index(["region", "year_month"])
-        .reindex(full_index)
+        df_padded.set_index(["region", "year_month"])
+        .reindex(full_padded_index)
         .reset_index()
         .sort_values(["region", "year_month"])
     )
@@ -124,6 +123,52 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
     ].shift(1)
 
     df_expanded = df_expanded[df_expanded["year_month"] >= start_period].copy() # Remove additional month so first month is not NaN
+
+    return df_expanded
+
+def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
+    """Processes the raw rainfall dataset to calculate monthly regional anomalies.
+
+    This function filters the dataset within the global start and end dates,
+    calculates the median 'r3q' value for each region and month, ensures a
+    complete time series index without missing months, and calculates a
+    lagged 3-month rainfall anomaly.
+
+    Args:
+        df_rainfall (pd.DataFrame): The raw rainfall DataFrame returned by `read_rainfall`.
+        all_regions: Array of unique regions for the Cartesian spine.
+        all_months: Array of target months for the Cartesian spine.
+
+    Returns:
+        pd.DataFrame: A processed DataFrame indexed by region and year_month,
+        containing the shifted rainfall anomalies.
+    """
+    df_grouped = df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
+
+    df_padded, final_regions, padded_months, start_period = get_padded_index(
+        df_grouped, all_regions, all_months, train_start_date, end_date
+    )
+
+    full_padded_index = pd.MultiIndex.from_product(
+        [final_regions, padded_months],
+        names=["region", "year_month"]
+    )
+
+    df_expanded = (
+        df_padded.set_index(["region", "year_month"])
+        .reindex(full_padded_index)
+        .reset_index()
+        .sort_values(["region", "year_month"])
+    )
+
+    df_expanded = df_expanded.rename(columns={"r3q": "rainfall_3m_anomaly"})
+
+    df_expanded["rainfall_3m_anomaly"] = df_expanded.groupby("region")[
+        "rainfall_3m_anomaly"
+    ].shift(1)
+
+    # Remove additional month so first month is not NaN
+    df_expanded = df_expanded[df_expanded["year_month"] >= start_period].copy()
 
     return df_expanded
 

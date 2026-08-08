@@ -103,39 +103,25 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_mont
         pd.DataFrame: A continuous time-series DataFrame indexed by region
             and 'year_month', featuring 1-month lagged median prices.
     """
-    start_period = pd.Period(train_start_date, freq="M") # As it shifts the data by a month we need an extra month before shifting and removing
-    padded_start = start_period - 1
-
-    df = df_prices[
-        (df_prices["year_month"] >= padded_start) & (df_prices["year_month"] <= end_date)
-        ].copy()
-
     df_grouped = (
-        df.groupby(["region", "year_month", "commodity"])["usdprice_per_kg"]
+        df_prices.groupby(["region", "year_month", "commodity"])["usdprice_per_kg"]
         .median()
         .reset_index()
     )
 
-    if all_regions is None:
-        all_regions = df_grouped["region"].unique()
-
-    # 2. Ensure our Cartesian spine includes the padded month
-    if all_months is None:
-        max_month = df_grouped["year_month"].max()
-    else:
-        max_month = all_months.max()
-
-    padded_all_months = pd.period_range(padded_start, max_month, freq="M")
+    df_padded, final_regions, padded_months, start_period = get_padded_index(
+        df_grouped, all_regions, all_months, train_start_date, end_date
+    )
     all_commodities = df_grouped["commodity"].unique()
 
-    full_index = pd.MultiIndex.from_product(
-        [all_regions, padded_all_months, all_commodities],
+    full_padded_index = pd.MultiIndex.from_product(
+        [final_regions, padded_months, all_commodities],
         names=["region", "year_month", "commodity"],
     )
 
     df_expanded = (
-        df_grouped.set_index(["region", "year_month", "commodity"])
-        .reindex(full_index)
+        df_padded.set_index(["region", "year_month", "commodity"])
+        .reindex(full_padded_index)
         .reset_index()
         .sort_values(["region", "commodity", "year_month"])
     )
@@ -160,11 +146,8 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_mont
     )
 
     price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
-
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
-
-    # Remove padded month
-    df_pivoted = df_pivoted[df_pivoted["year_month"] >= start_period].copy()
+    df_pivoted = df_pivoted[df_pivoted["year_month"] >= start_period].copy() # Remove padded month
 
     return df_pivoted
 
