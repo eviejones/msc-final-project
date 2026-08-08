@@ -6,8 +6,9 @@ import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
 
 from utils.logger import get_logger
+from utils.dates import train_start_date, end_date
 
-get_logger("Data preparation")
+logger = get_logger("Data preparation")
 
 
 def calculate_conflict_ratio(df: pd.DataFrame) -> dict:
@@ -129,36 +130,54 @@ def get_clean_combined_data(
     predictor_cols = acled_predictor_cols
     logger.info("ACLED data processed.")
 
+    all_regions  = combined_df["region"].unique()
+    all_months = pd.period_range(train_start_date, end_date, freq="M")
+
     if data_sources is not None:
         sources_lower = [source.lower() for source in data_sources]
 
         if "food" in sources_lower:
             processed_food_df, food_predictor_cols = food.get_clean_data(
-                download, remove_abyei
+                download=download,
+                remove_abyei=remove_abyei,
+                all_regions=all_regions,
+                all_months=all_months
             )
             combined_df = combined_df.merge(
-                processed_food_df, on=["region", "year_month"], how="inner"
+                processed_food_df, on=["region", "year_month"], how="left"
             )
             predictor_cols = predictor_cols + food_predictor_cols
             logger.info("Food prices data processed.")
         if "rain" in sources_lower:
-            processed_rain_df, rain_predictor_cols = rain.get_clean_data(download)
+            processed_rain_df, rain_predictor_cols = rain.get_clean_data(
+                download=download,
+                remove_abyei=remove_abyei,
+                all_regions=all_regions,
+                all_months=all_months)
             combined_df = combined_df.merge(
-                processed_rain_df, on=["region", "year_month"], how="inner"
+                processed_rain_df, on=["region", "year_month"], how="left"
             )
             predictor_cols = predictor_cols + rain_predictor_cols
             logger.info("Rainfall data processed.")
         if "text" in sources_lower:
             if download:
                 processed_notes_df, notes_prediction_cols = notes.get_clean_data(
-                    True, raw_acled_df
+                    calculate=True,
+                    df=raw_acled_df,
+                    all_regions=all_regions,
+                    all_months=all_months # Calculates embeddings, this could take a while
                 )
             else:
                 processed_notes_df, notes_prediction_cols = (
-                    notes.get_clean_data()
+                    notes.get_clean_data(False, None, all_regions, all_months)
                 )  # Read local embeddings
             combined_df = combined_df.merge(
-                processed_notes_df, on=["region", "year_month"], how="inner"
+                processed_notes_df, on=["region", "year_month"], how="left"
+            )
+            emb_fill_cols = [c for c in notes_prediction_cols if c.startswith("emb_")]
+            combined_df[emb_fill_cols] = combined_df[emb_fill_cols].fillna(0.0)
+            combined_df["has_acled_event"] = (
+                combined_df["has_acled_event"].fillna(0).astype(int)
             )
             predictor_cols = predictor_cols + notes_prediction_cols
             logger.info("Notes data processed.")
