@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sklearn.decomposition import PCA
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from utils.dates import get_padded_index, train_start_date, end_date
+from utils.dates import end_date, get_padded_index, train_start_date
 from utils.logger import get_logger
 
 logger = get_logger("Text processing")
@@ -360,10 +360,7 @@ def get_clean_data(
         df_monthly = get_monthly_regional_embeddings(df_regex, tokenizer, model)
 
     else:
-        df_monthly = pd.read_pickle("../data/monthly_regional_embeddigs.pkl")
-        df_monthly = df_monthly.rename(columns={"admin1": "region"}) # TODO remove this when reran
-        if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
-            df_monthly["year_month"] = pd.to_datetime(df_monthly["year_month"]).dt.to_period("M")
+        df_monthly = pd.read_pickle("../data/monthly_regional_embeddings.pkl")
     df_final = full_dataset(df_monthly, all_regions, all_months)
     predictor_cols = [c for c in df_final.columns if c.startswith("emb_")]
     predictor_cols.append("has_acled_event")

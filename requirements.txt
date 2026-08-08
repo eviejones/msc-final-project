@@ -10,3 +10,6 @@ pytest
 torch
 python-dotenv
 transformers
+ipywidgets
+hdx-python-api
+libomp
