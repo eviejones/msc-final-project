@@ -10,5 +10,3 @@ pytest
 torch
 python-dotenv
 transformers
-ipykernel
-ipywidgets

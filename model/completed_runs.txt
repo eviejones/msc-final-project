@@ -42,3 +42,5 @@ acled_event_food_rain_1_5
 acled_sub_food_text_pca_0.25_4
 acled_sub_food_text_pca_0.25_5
 acled_event_food_text_pca_0.25_4
+acled_event_food_text_pca_0.25_5
+acled_sub_food_text_pca_0.5_4
