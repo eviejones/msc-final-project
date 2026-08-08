@@ -13,6 +13,7 @@ onset_end_date = "2023-12-31"
 active_start_date = "2024-01-01"
 active_end_date = "2024-12-31"
 
+
 def get_padded_index(df, all_regions, all_months, true_start_date, end_date):
     """
     Creates the components for an index that accounts for the 1-month padding
@@ -28,8 +29,7 @@ def get_padded_index(df, all_regions, all_months, true_start_date, end_date):
     padded_start = start_period - 1
 
     df_padded = df[
-        (df["year_month"] >= padded_start)
-        & (df["year_month"] <= end_date)
+        (df["year_month"] >= padded_start) & (df["year_month"] <= end_date)
     ].copy()
 
     if all_regions is None:

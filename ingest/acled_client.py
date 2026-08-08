@@ -9,6 +9,7 @@ from utils.logger import get_logger
 
 logger = get_logger("ACLED ingest")
 
+
 # Ref: https://stackoverflow.com/questions/60435406/which-exception-should-be-raised-when-a-required-environment-variable-is-missing
 class MissingEnvironmentVariable(Exception):
     pass

@@ -130,7 +130,7 @@ def get_clean_combined_data(
     predictor_cols = acled_predictor_cols
     logger.info("ACLED data processed.")
 
-    all_regions  = combined_df["region"].unique()
+    all_regions = combined_df["region"].unique()
     all_months = pd.period_range(train_start_date, end_date, freq="M")
 
     if data_sources is not None:
@@ -141,7 +141,7 @@ def get_clean_combined_data(
                 download=download,
                 remove_abyei=remove_abyei,
                 all_regions=all_regions,
-                all_months=all_months
+                all_months=all_months,
             )
             combined_df = combined_df.merge(
                 processed_food_df, on=["region", "year_month"], how="left"
@@ -153,7 +153,8 @@ def get_clean_combined_data(
                 download=download,
                 remove_abyei=remove_abyei,
                 all_regions=all_regions,
-                all_months=all_months)
+                all_months=all_months,
+            )
             combined_df = combined_df.merge(
                 processed_rain_df, on=["region", "year_month"], how="left"
             )
@@ -165,11 +166,11 @@ def get_clean_combined_data(
                     calculate=True,
                     df=raw_acled_df,
                     all_regions=all_regions,
-                    all_months=all_months # Calculates embeddings, this could take a while
+                    all_months=all_months,  # Calculates embeddings, this could take a while
                 )
             else:
-                processed_notes_df, notes_prediction_cols = (
-                    notes.get_clean_data(False, None, all_regions, all_months)
+                processed_notes_df, notes_prediction_cols = notes.get_clean_data(
+                    False, None, all_regions, all_months
                 )  # Read local embeddings
             combined_df = combined_df.merge(
                 processed_notes_df, on=["region", "year_month"], how="left"

@@ -85,7 +85,9 @@ def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.Dat
     return renamed_df
 
 
-def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
+def process_and_pivot_food_prices(
+    df_prices: pd.DataFrame, all_regions, all_months
+) -> pd.DataFrame:
     """Aggregates and pivots food price data to create time-series features.
 
     This function filters the dataset starting one month prior to the global
@@ -128,7 +130,9 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_mont
 
     df_expanded["usdprice_per_kg"] = df_expanded.groupby(["region", "commodity"])[
         "usdprice_per_kg"
-    ].transform(lambda x: x.ffill()) # Forward fill on food data as we can assume that prices remain the same
+    ].transform(
+        lambda x: x.ffill()
+    )  # Forward fill on food data as we can assume that prices remain the same
 
     df_pivoted = df_expanded.pivot(
         index=["region", "year_month"],
@@ -147,12 +151,16 @@ def process_and_pivot_food_prices(df_prices: pd.DataFrame, all_regions, all_mont
 
     price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
-    df_pivoted = df_pivoted[df_pivoted["year_month"] >= start_period].copy() # Remove padded month
+    df_pivoted = df_pivoted[
+        df_pivoted["year_month"] >= start_period
+    ].copy()  # Remove padded month
 
     return df_pivoted
 
 
-def get_clean_data(download: bool = True, remove_abyei: bool = True, all_regions=None, all_months=None):
+def get_clean_data(
+    download: bool = True, remove_abyei: bool = True, all_regions=None, all_months=None
+):
     """An orchestrator function that runs the full food price data pipeline.
 
     This function calls the read and process functions in sequence, and extracts

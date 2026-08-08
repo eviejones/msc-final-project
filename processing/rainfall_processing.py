@@ -71,7 +71,9 @@ def read_rainfall(download: bool = True, remove_abyei: bool = True) -> pd.DataFr
     return rainfall_combined
 
 
-def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
+def process_rainfall(
+    df_rainfall: pd.DataFrame, all_regions, all_months
+) -> pd.DataFrame:
     """Processes the raw rainfall dataset to calculate monthly regional anomalies.
 
     This function filters the dataset within the global start and end dates,
@@ -91,9 +93,13 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
     #     & (df_rainfall["year_month"] <= end_date)
     # ].copy()
 
-    df_grouped = df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
+    df_grouped = (
+        df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
+    )
 
-    df_padded, full_padded_index, start_period = get_padded_index(df_grouped, all_regions, all_months, train_start_date)
+    df_padded, full_padded_index, start_period = get_padded_index(
+        df_grouped, all_regions, all_months, train_start_date
+    )
 
     # if all_regions is None:
     #     all_regions = df_grouped["region"].unique()
@@ -122,11 +128,16 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
         "rainfall_3m_anomaly"
     ].shift(1)
 
-    df_expanded = df_expanded[df_expanded["year_month"] >= start_period].copy() # Remove additional month so first month is not NaN
+    df_expanded = df_expanded[
+        df_expanded["year_month"] >= start_period
+    ].copy()  # Remove additional month so first month is not NaN
 
     return df_expanded
 
-def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
+
+def process_rainfall(
+    df_rainfall: pd.DataFrame, all_regions, all_months
+) -> pd.DataFrame:
     """Processes the raw rainfall dataset to calculate monthly regional anomalies.
 
     This function filters the dataset within the global start and end dates,
@@ -143,15 +154,16 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
         pd.DataFrame: A processed DataFrame indexed by region and year_month,
         containing the shifted rainfall anomalies.
     """
-    df_grouped = df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
+    df_grouped = (
+        df_rainfall.groupby(["region", "year_month"])["r3q"].median().reset_index()
+    )
 
     df_padded, final_regions, padded_months, start_period = get_padded_index(
         df_grouped, all_regions, all_months, train_start_date, end_date
     )
 
     full_padded_index = pd.MultiIndex.from_product(
-        [final_regions, padded_months],
-        names=["region", "year_month"]
+        [final_regions, padded_months], names=["region", "year_month"]
     )
 
     df_expanded = (
@@ -174,7 +186,7 @@ def process_rainfall(df_rainfall: pd.DataFrame, all_regions, all_months) -> pd.D
 
 
 def get_clean_data(
-    download: bool = True, remove_abyei: bool = True, all_regions = None, all_months = None
+    download: bool = True, remove_abyei: bool = True, all_regions=None, all_months=None
 ) -> tuple[pd.DataFrame, list[str]]:
     """Orchestrates the reading and processing of rainfall data.
 

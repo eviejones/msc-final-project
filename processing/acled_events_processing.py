@@ -9,11 +9,12 @@ logger = get_logger("Events processing")
 
 
 def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
-    """Takes the ACLED dataframe and marks event as conflict (1) or not conflict (0).
+    """
+    Takes the ACLED dataframe and marks event as conflict (1) or not conflict (0).
 
-     Conflict events are used to create the target Y.
+    Conflict events are used to create the target Y.
 
-     Args:
+    Args:
          df (pd.DataFrame): The full ACLED dataframe
     Returns:
         pd.DataFrame: The dataframe with an additional column 'conflict' with binary markers.
@@ -67,7 +68,8 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame:
-    """Outputs dataframe with regional monthly conflict events and marked escalations.
+    """
+    Outputs dataframe with regional monthly conflict events and marked escalations.
 
     1. Groups data by region and month, counting conflict events
     2. Expands data to include all regions and months
@@ -132,7 +134,8 @@ def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame
 def pre_process_data(
     df: pd.DataFrame, k: float, event_col: str = "sub_event_type"
 ) -> tuple[pd.DataFrame, list[str]]:
-    """Processes data so it is suitable to feed into the model.
+    """
+    Processes data so it is suitable to feed into the model.
 
     1. Groups data by region and year_month, marks conflict events
     2. Combines previously grouped data with fatalities and baseline data
@@ -208,8 +211,16 @@ def pre_process_data(
 
 
 def get_clean_data(
-    download=True, remove_abyei=True, k: float = 0.5, event_col: str = "event_type"
+    download=False, remove_abyei=True, k: float = 0.5, event_col: str = "event_type"
 ):
+    """Gets the clean ACLED event data, both raw and processed with target variables.
+
+    Args:
+        download (bool): Whether to download data from the API. Defaults to False.
+        remove_abyei (bool): Whether to remove events in Abyei. Defaults to True.
+        k (float): The number of standard deviations above the mean to mark as an escalation. Defaults to 0.5.
+        event_col (str): The event column to group on, either sub_event_type or event_type. Defaults to "event_type".
+    """
     if download:
         acled = AcledClient()
         all_data = acled.get_data(countries, start_date, end_date)
