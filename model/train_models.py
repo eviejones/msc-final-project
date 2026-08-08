@@ -21,7 +21,7 @@ from utils.data_prep import calculate_conflict_ratio, split_data
 from utils.dates import *
 from utils.logger import get_logger
 
-get_logger("Train model")
+logger = get_logger("Train model")
 
 def train_evaluate_model(
     processed_df: pd.DataFrame,
