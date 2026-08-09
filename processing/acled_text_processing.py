@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import torch
@@ -5,6 +7,7 @@ from dotenv import load_dotenv
 from sklearn.decomposition import PCA
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
+from utils.constants import FORCE_DOWNLOAD
 from utils.dates import (
     END_DATE,
     TRAIN_START_DATE,
@@ -16,6 +19,8 @@ from utils.logger import get_logger
 logger = get_logger("Text processing")
 
 load_dotenv()
+
+EMBEDDINGS_PATH = "data/acled/acled_monthly_regional_embeddings.pkl"
 
 def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -111,75 +116,19 @@ def get_embedding(
     # Mean pooling across the sequence length dimension
     return outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
 
-#
-# def get_monthly_regional_embeddings(
-#     df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
-# ) -> pd.DataFrame:
-#     """
-#     Calculates document embeddings and aggregates them by region ('admin1') and month.
-#
-#     Note:
-#         Assumes `train_start_date` and `end_date` are globally available (e.g., imported
-#         from `utils.dates`).
-#
-#     Args:
-#         df (pd.DataFrame): The DataFrame containing 'notes_cleaned', 'admin1', and 'year_month'.
-#         tokenizer (PreTrainedTokenizer): The tokenizer to use for embeddings.
-#         model (PreTrainedModel): The model to use for embeddings.
-#
-#     Returns:
-#         pd.DataFrame: A DataFrame with mean embeddings grouped by region and month,
-#             filtered by the global training date constraints.
-#     """
-#     logger.warning(
-#         f"Calculating embeddings for {len(df)} rows. This might take a while."
-#     )
-#
-#     df["notes_embeddings"] = None
-#     df["notes_embeddings"] = df["notes_cleaned"].apply(
-#         get_embedding, args=(tokenizer, model)
-#     )
-#
-#     # Expand the list of embeddings into separate columns
-#     embedding_cols = pd.DataFrame(df["notes_embeddings"].tolist(), index=df.index)
-#     embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
-#
-#     df_expanded = pd.concat([df[["admin1", "year_month"]], embedding_cols], axis=1)
-#     df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
-#
-#     # Group by region and month, then average the embeddings
-#     monthly_region_embeddings = (
-#         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
-#     )
-#
-#     monthly_region_embeddings["year_month"] = pd.PeriodIndex(monthly_region_embeddings["year_month"], freq="M")
-#     monthly_region_embeddings = monthly_region_embeddings.rename(columns={"admin1": "region"})
-#     # start_period = pd.Period(train_start_date, freq="M")
-#     # padded_start = start_period - 1
-#     #
-#     # df_final = monthly_region_embeddings[
-#     #     (monthly_region_embeddings["year_month"] >= padded_start)
-#     #     & (monthly_region_embeddings["year_month"] <= end_date)
-#     #     ].copy()
-#
-#     return monthly_region_embeddings
-#
-
 def get_monthly_regional_embeddings(
         df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
 ) -> pd.DataFrame:
     """
     Calculates document embeddings and aggregates them by region ('admin1') and month.
     """
-    start_period = pd.Period(TRAIN_START_DATE, freq="M")
-    padded_start = start_period - 1
-    end_period = pd.Period(END_DATE, freq="M")
+    padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
 
     df = df.copy()
     df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
 
     df_filtered = df[
-        (df["year_month"] >= padded_start) & (df["year_month"] <= end_period)
+        (df["year_month"] >= padded_start) & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
         ].copy()
 
     logger.warning(
@@ -315,25 +264,36 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     return df_grouped
 
 def get_clean_data(
-    calculate: bool = False, df: pd.DataFrame | None = None, all_regions = None, all_months = None
+    df: pd.DataFrame | None = None, all_regions = None, all_months = None
 ) -> tuple[pd.DataFrame, list[str]]:
     """
     Main orchestration function to clean data, generate or load embeddings,
     balance the panel dataset, and extract predictor columns.
 
+    Reads pre-computed embeddings from local folder if they already exist, unless
+    FORCE_DOWNLOAD is set, in which case (or if no cached file is found)
+    embeddings are recalculated from scratch using ConfliBERT.
+
     Args:
-        calculate (bool, optional): If True, computes embeddings from scratch using
-            ConfliBERT. If False, loads pre-computed embeddings from disk. Defaults to False.
-        df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if `calculate`
-            is True. Defaults to None.
+        df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if
+            embeddings need to be calculated (no cached file, or FORCE_DOWNLOAD is True).
+            Defaults to None.
 
     Returns:
         Tuple[pd.DataFrame, List[str]]: A tuple containing the final processed
             DataFrame and a list of predictor column names.
     """
-    if calculate:
+    if not FORCE_DOWNLOAD and os.path.exists(EMBEDDINGS_PATH):
+        logger.info(f"Reading local file: {EMBEDDINGS_PATH}")
+        df_monthly = pd.read_pickle(EMBEDDINGS_PATH)
+        if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
+            df_monthly["year_month"] = pd.to_datetime(df_monthly["year_month"]).dt.to_period("M")
+    else:
         if df is None:
-            raise ValueError("DataFrame 'df' must be provided when calculate=True")
+            raise ValueError(
+                "DataFrame 'df' must be provided to calculate embeddings "
+                f"(no cached file at {EMBEDDINGS_PATH}, or FORCE_DOWNLOAD is True)"
+            )
 
         model_name = "eventdata-utd/ConfliBERT-scr-uncased"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -344,11 +304,10 @@ def get_clean_data(
         check_max_tokens(tokenizer, df_regex)
         df_monthly = get_monthly_regional_embeddings(df_regex, tokenizer, model)
 
-    else:
-        df_monthly = pd.read_pickle("../data/monthly_regional_embeddigs.pkl")
-        df_monthly = df_monthly.rename(columns={"admin1": "region"}) # TODO remove this when reran
-        if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
-            df_monthly["year_month"] = pd.to_datetime(df_monthly["year_month"]).dt.to_period("M")
+        os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
+        df_monthly.to_pickle(EMBEDDINGS_PATH)
+        logger.info(f"Embeddings saved to: {EMBEDDINGS_PATH}")
+
     df_final = full_dataset(df_monthly, all_regions, all_months)
     predictor_cols = [c for c in df_final.columns if c.startswith("emb_")]
     predictor_cols.append("has_acled_event")
