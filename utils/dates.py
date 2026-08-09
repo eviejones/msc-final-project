@@ -1,22 +1,17 @@
 import pandas as pd
 
-start_date = "2017-07-01"  # TODO validation for 6 month warm up period
-end_date = "2024-12-31"
+TRAIN_START_DATE = pd.to_datetime( "2018-01-01")
+TRAIN_END_DATE = pd.to_datetime("2022-12-31")
 
-train_start_date = "2018-01-01"
-train_end_date = "2022-12-31"
-TRAIN_START_DATE = pd.to_datetime(train_start_date)
+ONSET_START_DATE = pd.to_datetime("2023-01-01")
+ONSET_END_DATE = pd.to_datetime("2023-12-31")
 
-onset_start_date = "2023-01-01"
-onset_end_date = "2023-12-31"
+ACTIVE_START_DATE = pd.to_datetime("2024-01-01")
+ACTIVE_END_DATE = pd.to_datetime("2024-12-31")
 
-active_start_date = "2024-01-01"
-active_end_date = "2024-12-31"
-
-WARMUP_START_DATE_6_MONTHS = TRAIN_START_DATE - pd.DateOffset(months=6)
-WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(months=1)
-END_DATE = active_end_date
-
+WARMUP_START_DATE_6_MONTHS = TRAIN_START_DATE - pd.DateOffset(months=6) # 6 months for ACLED baseline
+WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(months=1) # 1 month for other monthly data
+END_DATE = ACTIVE_END_DATE # The end of all data
 
 def get_padded_index(df, all_regions, all_months, warmup_start_date):
     """

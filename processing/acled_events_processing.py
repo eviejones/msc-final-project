@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 
 from ingest.acled_client import AcledClient
-from utils.dates import *
-from utils.logger import get_logger
 from utils.constants import COUNTRY
+from utils.dates import END_DATE, WARMUP_START_DATE_6_MONTHS
+from utils.logger import get_logger
 
 logger = get_logger("Events processing")
 
@@ -16,7 +16,7 @@ def mark_conflict_events(df: pd.DataFrame) -> pd.DataFrame:
     Conflict events are used to create the target Y.
 
     Args:
-         df (pd.DataFrame): The full ACLED dataframe
+        df (pd.DataFrame): The full ACLED dataframe
     Returns:
         pd.DataFrame: The dataframe with an additional column 'conflict' with binary markers.
     Raises:
@@ -220,7 +220,7 @@ def get_clean_data(k: float = 0.5, event_col: str = "event_type"):
     """
 
     acled = AcledClient()
-    all_data = acled.get_data(country=COUNTRY, start_date=start_date, end_date=end_date)
+    all_data = acled.get_data(country=COUNTRY, start_date=WARMUP_START_DATE_6_MONTHS, end_date=END_DATE)
 
     all_data = all_data[
         ~all_data["admin1"].str.lower().str.contains("abyei", na=False)
