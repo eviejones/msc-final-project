@@ -20,6 +20,9 @@ logger = get_logger("Text processing")
 load_dotenv()
 
 EMBEDDINGS_PATH = "data/acled/acled_monthly_regional_embeddings.pkl"
+EMBEDDINGS_PATH_CONFLICT_ONLY = (
+    "data/acled/acled_monthly_regional_embeddings_conflict_only.pkl"
+)
 
 
 def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
@@ -278,7 +281,10 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
 
 
 def get_clean_data(
-    df: pd.DataFrame | None = None, all_regions=None, all_months=None
+    df: pd.DataFrame | None = None,
+    all_regions=None,
+    all_months=None,
+    conflict_only: bool = False,
 ) -> tuple[pd.DataFrame, list[str]]:
     """
     Main orchestration function to clean data, generate or load embeddings,
@@ -292,14 +298,25 @@ def get_clean_data(
         df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if
             embeddings need to be calculated (no cached file, or FORCE_DOWNLOAD is True).
             Defaults to None.
+        conflict_only (bool, optional): If True, embeddings are computed only from
+            events where 'conflict' == 1 (battles, violence against civilians,
+            explosions/remote violence, riots), excluding non-conflict events such
+            as protests and strategic developments. This only affects which notes
+            are embedded; it does not filter any other part of the dataset. Cached
+            separately from the all-events embeddings so both can be compared.
+            Defaults to False.
 
     Returns:
         Tuple[pd.DataFrame, List[str]]: A tuple containing the final processed
             DataFrame and a list of predictor column names.
     """
-    if not FORCE_DOWNLOAD and os.path.exists(EMBEDDINGS_PATH):
-        logger.info(f"Reading local file: {EMBEDDINGS_PATH}")
-        df_monthly = pd.read_pickle(EMBEDDINGS_PATH)
+    embeddings_path = (
+        EMBEDDINGS_PATH_CONFLICT_ONLY if conflict_only else EMBEDDINGS_PATH
+    )
+
+    if not FORCE_DOWNLOAD and os.path.exists(embeddings_path):
+        logger.info(f"Reading local file: {embeddings_path}")
+        df_monthly = pd.read_pickle(embeddings_path)
         if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
             df_monthly["year_month"] = pd.to_datetime(
                 df_monthly["year_month"]
@@ -308,7 +325,20 @@ def get_clean_data(
         if df is None:
             raise ValueError(
                 "DataFrame 'df' must be provided to calculate embeddings "
-                f"(no cached file at {EMBEDDINGS_PATH}, or FORCE_DOWNLOAD is True)"
+                f"(no cached file at {embeddings_path}, or FORCE_DOWNLOAD is True)"
+            )
+
+        if conflict_only:
+            if "conflict" not in df.columns:
+                raise ValueError(
+                    "conflict_only=True requires a 'conflict' column on the input "
+                    "DataFrame."
+                )
+            original_len = len(df)
+            df = df[df["conflict"] == 1].copy()
+            logger.info(
+                f"conflict_only=True: filtered {original_len} rows down to "
+                f"{len(df)} conflict events for embedding."
             )
 
         model_name = "eventdata-utd/ConfliBERT-scr-uncased"
@@ -320,9 +350,9 @@ def get_clean_data(
         check_max_tokens(tokenizer, df_regex)
         df_monthly = get_monthly_regional_embeddings(df_regex, tokenizer, model)
 
-        os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
-        df_monthly.to_pickle(EMBEDDINGS_PATH)
-        logger.info(f"Embeddings saved to: {EMBEDDINGS_PATH}")
+        os.makedirs(os.path.dirname(embeddings_path), exist_ok=True)
+        df_monthly.to_pickle(embeddings_path)
+        logger.info(f"Embeddings saved to: {embeddings_path}")
 
     df_final = full_dataset(df_monthly, all_regions, all_months)
     predictor_cols = [c for c in df_final.columns if c.startswith("emb_")]

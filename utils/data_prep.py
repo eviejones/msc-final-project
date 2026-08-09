@@ -65,6 +65,7 @@ def get_clean_combined_data(
     data_sources: list[str] | None = None,
     k: float = 0.5,
     event_col: str = "event_type",
+    conflict_only_embeddings: bool = False,
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 
@@ -79,6 +80,10 @@ def get_clean_combined_data(
         k (float): The number of standard deviations above the mean to set the
             target threshold. Defaults to 0.5.
         event_col (str): Whether to use event_type or sub_event_type column. Defaults to event_type.
+        conflict_only_embeddings (bool): If True and "text" is in data_sources, text
+            embeddings are computed only from events where conflict == 1, rather than
+            all events. Cached separately so both variants can be compared. Does not
+            affect any other predictor columns. Defaults to False.
 
     Returns:
         combined_df (pd.DataFrame): The merged dataset.
@@ -157,6 +162,7 @@ def get_clean_combined_data(
                 df=raw_acled_df,
                 all_regions=all_regions,
                 all_months=all_months,
+                conflict_only=conflict_only_embeddings,
                 # Reads locally saved embeddings from unless FORCE_DOWNLOAD is set
             )
             combined_df = combined_df.merge(
