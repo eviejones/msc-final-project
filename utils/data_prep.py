@@ -4,9 +4,8 @@ import processing.acled_events_processing as acled
 import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
-
+from utils.dates import END_DATE, TRAIN_START_DATE
 from utils.logger import get_logger
-from utils.dates import train_start_date, end_date
 
 logger = get_logger("Data preparation")
 
@@ -130,7 +129,7 @@ def get_clean_combined_data(
     logger.info("ACLED data processed.")
 
     all_regions = combined_df["region"].unique()
-    all_months = pd.period_range(train_start_date, end_date, freq="M")
+    all_months = pd.period_range(TRAIN_START_DATE, END_DATE, freq="M")
 
     if data_sources is not None:
         sources_lower = [source.lower() for source in data_sources]
