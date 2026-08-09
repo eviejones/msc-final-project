@@ -129,7 +129,8 @@ def get_monthly_regional_embeddings(
     padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
 
     df = df.copy()
-    df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
+    if not isinstance(df["year_month"].dtype, pd.PeriodDtype):
+        df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
 
     df_filtered = df[
         (df["year_month"] >= padded_start)
@@ -317,7 +318,7 @@ def get_clean_data(
     if not FORCE_DOWNLOAD and os.path.exists(embeddings_path):
         logger.info(f"Reading local file: {embeddings_path}")
         df_monthly = pd.read_pickle(embeddings_path)
-        if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
+        if not isinstance(df_monthly["year_month"].dtype, pd.PeriodDtype):
             df_monthly["year_month"] = pd.to_datetime(
                 df_monthly["year_month"]
             ).dt.to_period("M")
