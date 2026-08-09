@@ -4,6 +4,7 @@ import pandas as pd
 from ingest.acled_client import AcledClient
 from utils.dates import *
 from utils.logger import get_logger
+from utils.name_mapping import COUNTRIES
 
 logger = get_logger("Events processing")
 
@@ -210,8 +211,7 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(
-    download=False, remove_abyei=True, k: float = 0.5, event_col: str = "event_type"
+def get_clean_data(remove_abyei=True, k: float = 0.5, event_col: str = "event_type", force_download: bool = False
 ):
     """Gets the clean ACLED event data, both raw and processed with target variables.
 
@@ -221,11 +221,9 @@ def get_clean_data(
         k (float): The number of standard deviations above the mean to mark as an escalation. Defaults to 0.5.
         event_col (str): The event column to group on, either sub_event_type or event_type. Defaults to "event_type".
     """
-    if download:
-        acled = AcledClient()
-        all_data = acled.get_data(countries, start_date, end_date)
-    else:
-        all_data = pd.read_csv("../data/all_data.csv")
+
+    acled = AcledClient()
+    all_data = acled.get_data(countries=COUNTRIES, start_date=start_date, end_date=end_date, force_download=download)
 
     if remove_abyei:
         all_data = all_data[

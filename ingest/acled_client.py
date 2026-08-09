@@ -126,7 +126,7 @@ class AcledClient:
             logger.info(f"Reading data from {filepath}.")
             return pd.read_csv(filepath)
         else:
-            logger.warning(f"No saved data found for {countries_str}. Set download to True.")
+            logger.warning(f"No saved data found for {countries_str}.")
             return pd.DataFrame()
 
     def get_data(
@@ -136,7 +136,7 @@ class AcledClient:
         end_date: str,
         *,
         event_types=None,
-        download: bool = False,
+        force_download: bool = False,
     ):
         """Gets data for specified countries and dates from the ACLED API.
 
@@ -145,6 +145,7 @@ class AcledClient:
             start_date (str): Start date for pulling data. Should be in format YYYY-MM-DD.
             end_date (str): End date for pulling data. Should be in format YYYY-MM-DD
             event_types (list[str]): List of event types to pull data from. Event types must match ACLED event types.
+            force_download (bool): If True, bypass any cached CSV and re-fetch from the API.
 
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
@@ -156,14 +157,16 @@ class AcledClient:
         self.start_date = start_date
         self.end_date = end_date
         self.event_types = event_types
-        params = self._build_params()
 
+        if not force_download:
+            cached_df = self._read_data(countries)
+            if not cached_df.empty:
+                return cached_df
+
+        params = self._build_params()
         params["page"] = 1
         request_end = False
         r_dfs = []
-        
-        if not download:
-            return self._read_data(countries)
 
         while not request_end:
             r = requests.get(
