@@ -2,7 +2,7 @@ import pandas as pd
 
 from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY, PRIMARY_COMMODITIES
-from utils.dates import *
+from utils.dates import get_padded_index, WARMUP_START_DATE_1_MONTH, TRAIN_START_DATE
 from utils.logger import get_logger
 from utils.name_mapping import clean_state_names
 
@@ -86,8 +86,8 @@ def process_and_pivot_food_prices(
         .reset_index()
     )
 
-    df_padded, final_regions, padded_months, start_period = get_padded_index(
-        df_grouped, all_regions, all_months, train_start_date, end_date
+    df_padded, final_regions, padded_months = get_padded_index(
+        df_grouped, all_regions, all_months, WARMUP_START_DATE_1_MONTH
     )
     all_commodities = df_grouped["commodity"].unique()
 
@@ -126,9 +126,7 @@ def process_and_pivot_food_prices(
 
     price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
-    df_pivoted = df_pivoted[
-        df_pivoted["year_month"] >= start_period
-    ].copy()  # Remove padded month
+    df_pivoted = df_pivoted[df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")].copy()
 
     return df_pivoted
 

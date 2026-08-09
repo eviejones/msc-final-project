@@ -5,6 +5,7 @@ end_date = "2024-12-31"
 
 train_start_date = "2018-01-01"
 train_end_date = "2022-12-31"
+TRAIN_START_DATE = pd.to_datetime(train_start_date)
 
 onset_start_date = "2023-01-01"
 onset_end_date = "2023-12-31"
@@ -12,8 +13,12 @@ onset_end_date = "2023-12-31"
 active_start_date = "2024-01-01"
 active_end_date = "2024-12-31"
 
+WARMUP_START_DATE_6_MONTHS = TRAIN_START_DATE - pd.DateOffset(months=6)
+WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(months=1)
+END_DATE = active_end_date
 
-def get_padded_index(df, all_regions, all_months, true_start_date, end_date):
+
+def get_padded_index(df, all_regions, all_months, warmup_start_date):
     """
     Creates the components for an index that accounts for the 1-month padding
     needed by food, rain and text data.
@@ -24,11 +29,10 @@ def get_padded_index(df, all_regions, all_months, true_start_date, end_date):
     Returns the padded DataFrame, the regions array, the padded months array,
     and the Period object for the true start date.
     """
-    start_period = pd.Period(true_start_date, freq="M")
-    padded_start = start_period - 1
+    padded_start = pd.Period(warmup_start_date, freq="M")
 
     df_padded = df[
-        (df["year_month"] >= padded_start) & (df["year_month"] <= end_date)
+        (df["year_month"] >= padded_start) & (df["year_month"] <= END_DATE)
     ].copy()
 
     if all_regions is None:
@@ -41,4 +45,4 @@ def get_padded_index(df, all_regions, all_months, true_start_date, end_date):
 
     padded_all_months = pd.period_range(padded_start, all_months.max(), freq="M")
 
-    return df_padded, all_regions, padded_all_months, start_period
+    return df_padded, all_regions, padded_all_months
