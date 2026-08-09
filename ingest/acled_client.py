@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 import requests
@@ -16,6 +16,8 @@ class MissingEnvironmentVariable(Exception):
 
 
 class AcledClient:
+    PAGE_SIZE = 5000
+
     def __init__(self):
         load_dotenv()
         self.endpoint = "https://acleddata.com/api/acled/read?_format=json"
@@ -29,6 +31,7 @@ class AcledClient:
                 f"Environment variable {e.args[0]} does not exist. Make sure it is saved in the .env file."
             )
 
+        # Token is valid for 24 hours
         self.access_token = self._get_access_token()
 
     def _get_access_token(self):
@@ -55,8 +58,8 @@ class AcledClient:
     def _validate_dates(self, start_date: str, end_date: str) -> None:
         """Validates that dates are in YYYY-MM-DD format and logically ordered."""
         try:
-            start = datetime.strptime(start_date, "%Y-%m-%d")
-            end = datetime.strptime(end_date, "%Y-%m-%d")
+            start = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            end = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
             if start > end:
                 raise ValueError(
@@ -97,6 +100,7 @@ class AcledClient:
             "country": ":OR:country=".join(self.countries),
             "event_date": f"{self.start_date}|{self.end_date}",
             "event_date_where": "BETWEEN",
+            "limit": self.PAGE_SIZE,
         }
         if self.event_types is not None:
             params["event_type"] = ":OR:event_type=".join(self.event_types)
@@ -144,7 +148,7 @@ class AcledClient:
                 r_dfs.append(r_df)
                 logger.info("Requesting data...")
 
-                if len(r.json()["data"]) < 5000:
+                if len(r_df) < self.PAGE_SIZE:
                     request_end = True
                 else:
                     params["page"] += 1
@@ -153,6 +157,10 @@ class AcledClient:
                     f"HTTP Code: {r.status_code}, Status: {r.reason}"
                 )
         final_df = pd.concat(r_dfs)
+        if final_df.empty:
+            logger.info("No data found for the given parameters.")
+            return final_df
+
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
         final_df["year_month"] = final_df["event_date"].dt.to_period("M")
         logger.info("All data successfully fetched.")
