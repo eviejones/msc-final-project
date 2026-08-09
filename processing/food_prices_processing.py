@@ -1,8 +1,8 @@
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
-from utils.constants import COUNTRY, PRIMARY_COMMODITIES
-from utils.dates import get_padded_index, WARMUP_START_DATE_1_MONTH, TRAIN_START_DATE
+from utils.constants import COUNTRY, PRIMARY_COMMODITIES, TRAIN_START_DATE
+from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
 from utils.name_mapping import clean_state_names
 
@@ -28,7 +28,7 @@ def read_food_prices() -> pd.DataFrame:
     df = hdx.get_data(
         dataset_name=f"wfp-food-prices-for-{country_lower}",
         file_name=f"{COUNTRY} - Food Prices",
-        file_type="csv"
+        file_type="csv",
     )
 
     df_filtered = df[
@@ -126,7 +126,9 @@ def process_and_pivot_food_prices(
 
     price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
-    df_pivoted = df_pivoted[df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")].copy()
+    df_pivoted = df_pivoted[
+        df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
+    ].copy()
 
     return df_pivoted
 

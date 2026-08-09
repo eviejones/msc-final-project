@@ -12,6 +12,7 @@ from utils.logger import get_logger
 
 logger = get_logger("HDXClient")
 
+
 class HdxClient:
     def __init__(self):
         self.data = Dataset
@@ -24,8 +25,7 @@ class HdxClient:
         """Formats a file name to match the naming convention used across ingest clients."""
         name = re.sub(r"[\s_-]+", "_", file_name.lower().strip())
         return f"hdx_{name}"
-    
-    
+
     def get_admin_boundaries(self, dataset_name, file_name, file_type):
         download_dir = "data/hdx/admin_boundaries"
         formatted_name = self._format_file_name(file_name)
@@ -37,7 +37,9 @@ class HdxClient:
 
         dataset = self.data.read_from_hdx(dataset_name)
         if dataset is None:
-            logger.error("Dataset not found. Please check the dataset name and try again.")
+            logger.error(
+                "Dataset not found. Please check the dataset name and try again."
+            )
             return None
 
         resources = dataset.get_resources()
@@ -53,7 +55,9 @@ class HdxClient:
         _, downloaded_path = target_resource.download(folder=download_dir)
         logger.info(f"Downloaded file to: {downloaded_path}")
 
-        if zipfile.is_zipfile(downloaded_path): # Ref: https://stackoverflow.com/questions/3451111/unzipping-files-in-python
+        if zipfile.is_zipfile(
+            downloaded_path
+        ):  # Ref: https://stackoverflow.com/questions/3451111/unzipping-files-in-python
             logger.info("Extracting admin boundaries zip...")
             with zipfile.ZipFile(downloaded_path, "r") as zip_ref:
                 target_member = next(
@@ -105,7 +109,7 @@ class HdxClient:
 
         if target_resource:
             os.makedirs(download_dir, exist_ok=True)
-            if os.path.exists(file_path): # Delete existing file if forcee_download
+            if os.path.exists(file_path):  # Delete existing file if forcee_download
                 os.remove(file_path)
             _, path = target_resource.download(folder=download_dir)
             logger.info(f"Downloaded file to: {path}")

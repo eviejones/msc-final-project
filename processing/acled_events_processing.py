@@ -220,10 +220,12 @@ def get_clean_data(k: float = 0.5, event_col: str = "event_type"):
     """
 
     acled = AcledClient()
-    all_data = acled.get_data(country=COUNTRY, start_date=WARMUP_START_DATE_6_MONTHS, end_date=END_DATE)
+    all_data = acled.get_data(
+        country=COUNTRY, start_date=WARMUP_START_DATE_6_MONTHS, end_date=END_DATE
+    )
 
     all_data = all_data[
         ~all_data["admin1"].str.lower().str.contains("abyei", na=False)
-    ] # Remove Abyei events as it is included in ACLED data
+    ]  # Remove Abyei events as it is included in ACLED data
     processed_df, predictor_cols = pre_process_data(all_data, k, event_col)
     return processed_df, predictor_cols, all_data

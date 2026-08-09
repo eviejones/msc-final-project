@@ -181,7 +181,7 @@ class AcledClient:
         final_df = pd.concat(r_dfs)
         if final_df.empty:
             logger.warning("No data found for the given parameters.")
-            return final_df 
+            return final_df
 
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
         final_df["year_month"] = final_df["event_date"].dt.to_period("M")

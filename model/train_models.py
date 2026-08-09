@@ -11,13 +11,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import RandomizedSearchCV
 
 from processing.acled_text_processing import apply_pca_train_only
-from utils.cross_validation import (
-    grouped_timeseries_cv_ids,
-    timeseries_cross_val_predict,
-    verify_cv_splits,
-)
-from utils.data_prep import calculate_conflict_ratio, split_data
-from utils.dates import (
+from utils.constants import (
     ACTIVE_END_DATE,
     ACTIVE_START_DATE,
     ONSET_END_DATE,
@@ -25,6 +19,12 @@ from utils.dates import (
     TRAIN_END_DATE,
     TRAIN_START_DATE,
 )
+from utils.cross_validation import (
+    grouped_timeseries_cv_ids,
+    timeseries_cross_val_predict,
+    verify_cv_splits,
+)
+from utils.data_prep import calculate_conflict_ratio, split_data
 from utils.logger import get_logger
 
 logger = get_logger("Train model")

@@ -1,8 +1,8 @@
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
-from utils.constants import COUNTRY
-from utils.dates import TRAIN_START_DATE, WARMUP_START_DATE_1_MONTH, get_padded_index
+from utils.constants import COUNTRY, TRAIN_START_DATE
+from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
 from utils.name_mapping import clean_state_names, get_iso3, pcode_mapping
 
@@ -13,7 +13,7 @@ def read_rainfall() -> pd.DataFrame:
     """Reads and standardises subnational rainfall data from the HDX client.
 
     This function retrieves the rainfall dataset, filters it to administrative
-    level 1, and maps PCODEs to clean region names. 
+    level 1, and maps PCODEs to clean region names.
 
     Returns:
         pd.DataFrame: A formatted DataFrame containing the combined rainfall data
@@ -40,7 +40,6 @@ def read_rainfall() -> pd.DataFrame:
     rainfall_filtered["year_month"] = rainfall_filtered["date"].dt.to_period("M")
 
     return rainfall_filtered
-
 
 
 def process_rainfall(
@@ -88,7 +87,9 @@ def process_rainfall(
     ].shift(1)
 
     # Remove additional month so first month is not NaN
-    df_expanded = df_expanded[df_expanded["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")].copy()
+    df_expanded = df_expanded[
+        df_expanded["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
+    ].copy()
 
     return df_expanded
 

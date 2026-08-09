@@ -1,17 +1,18 @@
 import pandas as pd
+from constants import (
+    ACTIVE_END_DATE,
+    TRAIN_START_DATE,
+)
 
-TRAIN_START_DATE = pd.to_datetime( "2018-01-01")
-TRAIN_END_DATE = pd.to_datetime("2022-12-31")
+WARMUP_START_DATE_6_MONTHS = TRAIN_START_DATE - pd.DateOffset(
+    months=6
+)  # 6 months for ACLED baseline
+WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(
+    months=1
+)  # 1 month for other monthly data
 
-ONSET_START_DATE = pd.to_datetime("2023-01-01")
-ONSET_END_DATE = pd.to_datetime("2023-12-31")
+END_DATE = ACTIVE_END_DATE  # The end of all data
 
-ACTIVE_START_DATE = pd.to_datetime("2024-01-01")
-ACTIVE_END_DATE = pd.to_datetime("2024-12-31")
-
-WARMUP_START_DATE_6_MONTHS = TRAIN_START_DATE - pd.DateOffset(months=6) # 6 months for ACLED baseline
-WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(months=1) # 1 month for other monthly data
-END_DATE = ACTIVE_END_DATE # The end of all data
 
 def get_padded_index(df, all_regions, all_months, warmup_start_date):
     """
@@ -27,7 +28,8 @@ def get_padded_index(df, all_regions, all_months, warmup_start_date):
     padded_start = pd.Period(warmup_start_date, freq="M")
 
     df_padded = df[
-        (df["year_month"] >= padded_start) & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
+        (df["year_month"] >= padded_start)
+        & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
     ].copy()
 
     if all_regions is None:
@@ -41,5 +43,6 @@ def get_padded_index(df, all_regions, all_months, warmup_start_date):
     padded_all_months = pd.period_range(padded_start, all_months.max(), freq="M")
 
     return df_padded, all_regions, padded_all_months
+
 
 # TODO validate all date times

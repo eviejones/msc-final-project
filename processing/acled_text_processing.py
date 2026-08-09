@@ -7,10 +7,9 @@ from dotenv import load_dotenv
 from sklearn.decomposition import PCA
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from utils.constants import FORCE_DOWNLOAD
+from utils.constants import FORCE_DOWNLOAD, TRAIN_START_DATE
 from utils.dates import (
     END_DATE,
-    TRAIN_START_DATE,
     WARMUP_START_DATE_1_MONTH,
     get_padded_index,
 )
@@ -21,6 +20,7 @@ logger = get_logger("Text processing")
 load_dotenv()
 
 EMBEDDINGS_PATH = "data/acled/acled_monthly_regional_embeddings.pkl"
+
 
 def remove_dates(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -116,8 +116,9 @@ def get_embedding(
     # Mean pooling across the sequence length dimension
     return outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
 
+
 def get_monthly_regional_embeddings(
-        df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
+    df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
 ) -> pd.DataFrame:
     """
     Calculates document embeddings and aggregates them by region ('admin1') and month.
@@ -128,8 +129,9 @@ def get_monthly_regional_embeddings(
     df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
 
     df_filtered = df[
-        (df["year_month"] >= padded_start) & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
-        ].copy()
+        (df["year_month"] >= padded_start)
+        & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
+    ].copy()
 
     logger.warning(
         f"Calculating embeddings for {len(df_filtered)} rows. This might take a while."
@@ -139,10 +141,14 @@ def get_monthly_regional_embeddings(
         get_embedding, args=(tokenizer, model)
     )
 
-    embedding_cols = pd.DataFrame(df_filtered["notes_embeddings"].tolist(), index=df_filtered.index)
+    embedding_cols = pd.DataFrame(
+        df_filtered["notes_embeddings"].tolist(), index=df_filtered.index
+    )
     embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
 
-    df_expanded = pd.concat([df_filtered[["admin1", "year_month"]], embedding_cols], axis=1)
+    df_expanded = pd.concat(
+        [df_filtered[["admin1", "year_month"]], embedding_cols], axis=1
+    )
     df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
 
     # Group by region and month, then average the embeddings
@@ -150,9 +156,12 @@ def get_monthly_regional_embeddings(
         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
     )
 
-    monthly_region_embeddings = monthly_region_embeddings.rename(columns={"admin1": "region"})
+    monthly_region_embeddings = monthly_region_embeddings.rename(
+        columns={"admin1": "region"}
+    )
 
     return monthly_region_embeddings
+
 
 def apply_pca_train_only(
     train_df: pd.DataFrame,
@@ -228,9 +237,11 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     """
     df = df.copy()
 
-    df_padded, final_regions, padded_months, = get_padded_index(
-        df, all_regions, all_months, WARMUP_START_DATE_1_MONTH
-    )
+    (
+        df_padded,
+        final_regions,
+        padded_months,
+    ) = get_padded_index(df, all_regions, all_months, WARMUP_START_DATE_1_MONTH)
 
     full_padded_index = pd.MultiIndex.from_product(
         [final_regions, padded_months], names=["region", "year_month"]
@@ -241,7 +252,7 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
         .reindex(full_padded_index)
         .reset_index()
     )
-    
+
     emb_cols = [c for c in df_grouped.columns if c.startswith("emb_")]
 
     # Create a col to flag if there are actually 0 events
@@ -252,19 +263,22 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     df_grouped = df_grouped.sort_values(by=["region", "year_month"])
 
     df_grouped[emb_cols] = df_grouped.groupby("region")[emb_cols].shift(1)
-    df_grouped["has_acled_event"] = df_grouped.groupby("region")["has_acled_event"].shift(1)
+    df_grouped["has_acled_event"] = df_grouped.groupby("region")[
+        "has_acled_event"
+    ].shift(1)
 
     # Shifting adds NaNs back in so need to fill again
     df_grouped[emb_cols] = df_grouped[emb_cols].fillna(0.0)
-    df_grouped["has_acled_event"] = (
-        df_grouped["has_acled_event"].fillna(0).astype(int)
-    )
-    df_grouped = df_grouped[df_grouped["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")].copy() # Remove buffered data
+    df_grouped["has_acled_event"] = df_grouped["has_acled_event"].fillna(0).astype(int)
+    df_grouped = df_grouped[
+        df_grouped["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
+    ].copy()  # Remove buffered data
 
     return df_grouped
 
+
 def get_clean_data(
-    df: pd.DataFrame | None = None, all_regions = None, all_months = None
+    df: pd.DataFrame | None = None, all_regions=None, all_months=None
 ) -> tuple[pd.DataFrame, list[str]]:
     """
     Main orchestration function to clean data, generate or load embeddings,
@@ -287,7 +301,9 @@ def get_clean_data(
         logger.info(f"Reading local file: {EMBEDDINGS_PATH}")
         df_monthly = pd.read_pickle(EMBEDDINGS_PATH)
         if not pd.api.types.is_period_dtype(df_monthly["year_month"]):
-            df_monthly["year_month"] = pd.to_datetime(df_monthly["year_month"]).dt.to_period("M")
+            df_monthly["year_month"] = pd.to_datetime(
+                df_monthly["year_month"]
+            ).dt.to_period("M")
     else:
         if df is None:
             raise ValueError(
