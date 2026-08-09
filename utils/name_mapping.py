@@ -23,7 +23,8 @@ def get_iso3(country: str) -> str:
     return pycountry.countries.lookup(country).alpha_3
 
 def pcode_mapping(country: str, admin_level: int = 1) -> dict:
-    """Fetches the admin boundaries for a country to map the pcode names from the rainfall data set to clean region names. """
+    """Fetches the admin boundaries for a country to map the pcode names from the rainfall data set to clean region names."""
+    logger.info("Creating a PCODE map for rainfall data. This may take a few seconds...")
     iso3 = get_iso3(country).lower()
 
     hdx = HdxClient()
