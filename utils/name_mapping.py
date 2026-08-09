@@ -1,5 +1,3 @@
-COUNTRIES = ["Sudan"]
-
 SUDAN_STATE_MAPPING = {
     "Al Gezira": "Al Jazirah",
     "Nile": "River Nile",
