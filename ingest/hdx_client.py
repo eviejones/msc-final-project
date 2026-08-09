@@ -1,4 +1,5 @@
 import os
+import re
 import zipfile
 
 import geopandas as gpd
@@ -19,8 +20,15 @@ class HdxClient:
                 hdx_site="prod", user_agent="msc-project", hdx_read_only=True
             )
 
+    def _format_file_name(self, file_name: str) -> str:
+        """Formats a file name to match the naming convention used across ingest clients."""
+        name = file_name.lower().replace("-", "")
+        name = re.sub(r"\s+", "_", name.strip())
+        return f"hdx_{name}"
+
     def get_data(self, dataset_name, file_name, file_type):
         download_dir = "data/hdx"
+        file_name = self._format_file_name(file_name)
         file_path = os.path.join(download_dir, f"{file_name}.{file_type}")
 
         if not FORCE_DOWNLOAD and os.path.exists(file_path):
@@ -44,7 +52,10 @@ class HdxClient:
                 os.remove(file_path)
             _, path = target_resource.download(folder=download_dir)
             logger.info(f"Downloaded file to: {path}")
-            return pd.read_csv(path)
+            if path != file_path:
+                os.replace(path, file_path)
+                logger.info(f"Renamed downloaded file to: {file_path}")
+            return pd.read_csv(file_path)
 
         logger.error("No suitable target resource found.")
         return None
