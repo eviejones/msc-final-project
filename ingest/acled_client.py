@@ -4,7 +4,8 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from utils.constants import FORCE_DOWNLOAD
+# from utils.constants import FORCE_DOWNLOAD
+FORCE_DOWNLOAD = True
 from utils.logger import get_logger
 
 logger = get_logger("AcledClient")
@@ -108,7 +109,7 @@ class AcledClient:
     def _read_data(self, country: str) -> pd.DataFrame:
         """Reads the saved data from a csv file if it exists."""
         country_str = country.lower().replace(" ", "_")
-        filename = f"acled_data_{country_str}.csv"
+        filename = f"acled_{country_str}.csv"
         filepath = f"data/acled/{filename}"
         if os.path.exists(filepath):
             logger.info(f"Reading data from {filepath}.")
@@ -116,6 +117,65 @@ class AcledClient:
         else:
             logger.warning(f"No saved data found for {country_str}.")
             return pd.DataFrame()
+        
+        
+    def _mark_conflict_events(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Takes the ACLED dataframe and marks event as conflict (1) or not conflict (0).
+
+        Conflict events are used to create the target Y.
+
+        Args:
+            df (pd.DataFrame): The full ACLED dataframe
+        Returns:
+            pd.DataFrame: The dataframe with an additional column 'conflict' with binary markers.
+        Raises:
+            ValueError: If 'sub_event_type' contains values not present in the mapping.
+        """
+
+        acled_subevent_mapping = {
+            # BATTLES (Conflict)
+            "Armed clash": 1,
+            "Government regains territory": 1,
+            "Non-state actor overtakes territory": 1,
+            # EXPLOSIONS / REMOTE VIOLENCE (Conflict)
+            "Air/drone strike": 1,
+            "Chemical weapon": 1,
+            "Remote explosive/landmine/IED": 1,
+            "Shelling/artillery/missile attack": 1,
+            "Suicide bomb": 1,
+            "Grenade": 1,
+            # VIOLENCE AGAINST CIVILIANS (Conflict)
+            "Abduction/forced disappearance": 1,
+            "Attack": 1,
+            "Sexual violence": 1,
+            # RIOTS (Conflict)
+            "Mob violence": 1,
+            "Violent demonstration": 1,
+            # PROTESTS (Non-conflict)
+            "Excessive force against protesters": 0,
+            "Peaceful protest": 0,
+            "Protest with intervention": 0,
+            # STRATEGIC DEVELOPMENTS (Non-conflict)
+            "Agreement": 0,
+            "Arrests": 0,
+            "Change to group/activity": 0,
+            "Disrupted weapons use": 0,
+            "Headquarters or base established": 0,
+            "Looting/property destruction": 0,
+            "Non-violent transfer of territory": 0,
+            "Other": 0,
+        }
+        unmapped_events = set(df["sub_event_type"]) - set(acled_subevent_mapping.keys())
+
+        if unmapped_events:
+            raise ValueError(
+                f"Unmapped sub_event_type(s) found in DataFrame: {unmapped_events}"
+            )
+
+        df["conflict"] = df["sub_event_type"].map(acled_subevent_mapping)
+
+        return df
 
     def get_data(
         self,
@@ -185,6 +245,7 @@ class AcledClient:
 
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
         final_df["year_month"] = final_df["event_date"].dt.to_period("M")
+        mapped_df = self._mark_conflict_events(final_df)
         logger.info("All data successfully fetched.")
-        self._save_data(final_df)
-        return final_df
+        self._save_data(mapped_df)
+        return mapped_df

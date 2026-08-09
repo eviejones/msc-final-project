@@ -1,5 +1,5 @@
 import pandas as pd
-from constants import (
+from utils.constants import (
     ACTIVE_END_DATE,
     TRAIN_START_DATE,
 )
