@@ -27,7 +27,7 @@ def get_padded_index(df, all_regions, all_months, warmup_start_date):
     padded_start = pd.Period(warmup_start_date, freq="M")
 
     df_padded = df[
-        (df["year_month"] >= padded_start) & (df["year_month"] <= END_DATE)
+        (df["year_month"] >= padded_start) & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
     ].copy()
 
     if all_regions is None:
