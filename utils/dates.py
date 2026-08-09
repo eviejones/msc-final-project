@@ -41,3 +41,5 @@ def get_padded_index(df, all_regions, all_months, warmup_start_date):
     padded_all_months = pd.period_range(padded_start, all_months.max(), freq="M")
 
     return df_padded, all_regions, padded_all_months
+
+# TODO validate all date times
