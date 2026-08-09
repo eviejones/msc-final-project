@@ -105,9 +105,38 @@ class AcledClient:
         if self.event_types is not None:
             params["event_type"] = ":OR:event_type=".join(self.event_types)
         return params
+    
+    def _save_data(self, df: pd.DataFrame):
+        """Saves the fetched data to a csv file."""
+        countries_str = "_".join(country.lower().replace(" ", "_") for country in self.countries)
+        filename = f"acled_data_{countries_str}.csv"
+        if not os.path.exists("data"):
+            os.makedirs("data")
+        if not os.path.exists("data/acled"):
+            os.makedirs("data/acled")
+        df.to_csv(f"data/acled/{filename}", index=False)
+        logger.info(f"Data saved to data/acled/{filename}.")
+        
+    def _read_data(self, countries: list[str]) -> pd.DataFrame:
+        """Reads the saved data from a csv file if it exists."""
+        countries_str = "_".join(country.lower().replace(" ", "_") for country in countries)
+        filename = f"acled_data_{countries_str}.csv"
+        filepath = f"data/acled/{filename}"
+        if os.path.exists(filepath):
+            logger.info(f"Reading data from {filepath}.")
+            return pd.read_csv(filepath)
+        else:
+            logger.warning(f"No saved data found for {countries_str}. Set download to True.")
+            return pd.DataFrame()
 
     def get_data(
-        self, countries: list[str], start_date: str, end_date: str, event_types=None
+        self,
+        countries: list[str],
+        start_date: str,
+        end_date: str,
+        *,
+        event_types=None,
+        download: bool = False,
     ):
         """Gets data for specified countries and dates from the ACLED API.
 
@@ -132,6 +161,9 @@ class AcledClient:
         params["page"] = 1
         request_end = False
         r_dfs = []
+        
+        if not download:
+            return self._read_data(countries)
 
         while not request_end:
             r = requests.get(
@@ -158,10 +190,11 @@ class AcledClient:
                 )
         final_df = pd.concat(r_dfs)
         if final_df.empty:
-            logger.info("No data found for the given parameters.")
-            return final_df
+            logger.warning("No data found for the given parameters.")
+            return final_df 
 
         final_df["event_date"] = pd.to_datetime(final_df["event_date"])
         final_df["year_month"] = final_df["event_date"].dt.to_period("M")
         logger.info("All data successfully fetched.")
+        self._save_data(final_df)
         return final_df
