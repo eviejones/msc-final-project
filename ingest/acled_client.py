@@ -100,7 +100,7 @@ class AcledClient:
     def _save_data(self, df: pd.DataFrame):
         """Saves the fetched data to a csv file."""
         country_str = self.country.lower().replace(" ", "_")
-        filename = f"acled_data_{country_str}.csv"
+        filename = f"acled_{country_str}.csv"
         if not os.path.exists("data"):
             os.makedirs("data")
         if not os.path.exists("data/acled"):
