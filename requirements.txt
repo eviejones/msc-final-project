@@ -13,3 +13,4 @@ transformers
 ruff
 ipywidgets
 ipykernel
+hdx-python-api
