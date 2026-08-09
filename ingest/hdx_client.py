@@ -10,7 +10,7 @@ from hdx.data.dataset import Dataset
 from utils.constants import FORCE_DOWNLOAD
 from utils.logger import get_logger
 
-logger = get_logger("HDX Client")
+logger = get_logger("HDXClient")
 
 class HdxClient:
     def __init__(self):
@@ -22,35 +22,23 @@ class HdxClient:
 
     def _format_file_name(self, file_name: str) -> str:
         """Formats a file name to match the naming convention used across ingest clients."""
-        name = file_name.lower().replace("-", "")
+        name = file_name.lower().replace("-", "_")
         name = re.sub(r"\s+", "_", name.strip())
         return f"hdx_{name}"
     
     
-    def get_admin_boundaries(self, dataset_name, file_name, file_type, download=True):
-        download_dir = "data/hdx"
+    def get_admin_boundaries(self, dataset_name, file_name, file_type):
+        download_dir = "data/hdx/admin_boundaries"
+        formatted_name = self._format_file_name(file_name)
+        file_path = os.path.join(download_dir, f"{formatted_name}.{file_type}")
 
-        if not download:
-            file_path = next(
-                (
-                    os.path.join(download_dir, f)
-                    for f in os.listdir(download_dir)
-                    if file_name.lower() in f.lower()
-                    and f.endswith(f".{file_type.lower()}")
-                ),
-                None,
-            )
-
-            if file_path:
-                logger.info(f"download=False: Reading local file {file_path}")
-                return gpd.read_file(file_path)
-
-            logger.error(f"Local file matching '{file_name}.{file_type}' not found.")
-            return None
+        if not FORCE_DOWNLOAD and os.path.exists(file_path):
+            logger.info(f"Reading local file {file_path}")
+            return gpd.read_file(file_path)
 
         dataset = self.data.read_from_hdx(dataset_name)
         if dataset is None:
-            logger.error("Dataset not found.")
+            logger.error("Dataset not found. Please check the dataset name and try again.")
             return None
 
         resources = dataset.get_resources()
@@ -58,37 +46,43 @@ class HdxClient:
             (r for r in resources if file_type.lower() in r["format"].lower()), None
         )
 
-        if target_resource:
-            os.makedirs(download_dir, exist_ok=True)
-            _, path = target_resource.download(folder=download_dir)
-            logger.info(f"Downloaded file to: {path}")
+        if not target_resource:
+            logger.error("No suitable target resource found.")
+            return None
 
-            if zipfile.is_zipfile(path):
-                logger.info("Extracting zip archive...")
-                with zipfile.ZipFile(path, "r") as zip_ref:
-                    extract_dir = os.path.dirname(path)
-                    zip_ref.extractall(extract_dir)
+        os.makedirs(download_dir, exist_ok=True)
+        _, downloaded_path = target_resource.download(folder=download_dir)
+        logger.info(f"Downloaded file to: {downloaded_path}")
 
-                    target_file = next(
-                        (
-                            os.path.join(extract_dir, f)
-                            for f in zip_ref.namelist()
-                            if file_name.lower() in f.lower()
-                            and f.endswith(f".{file_type.lower()}")
-                        ),
-                        None,
+        if zipfile.is_zipfile(downloaded_path): # Ref: https://stackoverflow.com/questions/3451111/unzipping-files-in-python
+            logger.info("Extracting admin boundaries zip...")
+            with zipfile.ZipFile(downloaded_path, "r") as zip_ref:
+                target_member = next(
+                    (
+                        member
+                        for member in zip_ref.namelist()
+                        if file_name.lower() in member.lower()
+                        and member.endswith(f".{file_type.lower()}")
+                    ),
+                    None,
+                )
+                if not target_member:
+                    logger.error(
+                        f"Could not find '{file_name}' with extension '.{file_type}' inside the zip."
                     )
+                    return None
+                zip_ref.extract(target_member, download_dir)
+            extracted_path = os.path.join(download_dir, target_member)
+            os.remove(downloaded_path)
+        else:
+            extracted_path = downloaded_path
 
-                    if target_file:
-                        path = target_file
-                    else:
-                        logger.error(
-                            f"Could not find '{file_name}' with extension '.{file_type}' inside the zip."
-                        )
-                        return None
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        os.replace(extracted_path, file_path)
+        logger.info(f"Admin boundaries saved as: {file_path}")
 
-            logger.info(f"Successfully loaded '{file_name}' into dataframe")
-            return gpd.read_file(path)
+        return gpd.read_file(file_path)
 
     def get_data(self, dataset_name, file_name, file_type):
         download_dir = "data/hdx"
@@ -96,7 +90,7 @@ class HdxClient:
         file_path = os.path.join(download_dir, f"{file_name}.{file_type}")
 
         if not FORCE_DOWNLOAD and os.path.exists(file_path):
-            logger.info(f"Reading local file {file_path}")
+            logger.info(f"Reading local file: {file_path}")
             return pd.read_csv(file_path)
 
         dataset = self.data.read_from_hdx(dataset_name)
