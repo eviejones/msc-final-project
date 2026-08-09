@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 import numpy as np
@@ -18,7 +17,14 @@ from utils.cross_validation import (
     verify_cv_splits,
 )
 from utils.data_prep import calculate_conflict_ratio, split_data
-from utils.dates import *
+from utils.dates import (
+    ACTIVE_END_DATE,
+    ACTIVE_START_DATE,
+    ONSET_END_DATE,
+    ONSET_START_DATE,
+    TRAIN_END_DATE,
+    TRAIN_START_DATE,
+)
 from utils.logger import get_logger
 
 logger = get_logger("Train model")
@@ -109,20 +115,20 @@ def train_evaluate_model(
     train_df, y_train, _ = split_data(
         processed_df,
         predictor_cols,
-        train_start_date,
-        train_end_date,
+        TRAIN_START_DATE,
+        TRAIN_END_DATE,
     )
     onset_df, y_onset, _ = split_data(
         processed_df,
         predictor_cols,
-        onset_start_date,
-        onset_end_date,
+        ONSET_START_DATE,
+        ONSET_END_DATE,
     )
     active_df, y_active, _ = split_data(
         processed_df,
         predictor_cols,
-        active_start_date,
-        active_end_date,
+        ACTIVE_START_DATE,
+        ACTIVE_END_DATE,
     )
 
     if use_pca:
