@@ -22,8 +22,7 @@ class HdxClient:
 
     def _format_file_name(self, file_name: str) -> str:
         """Formats a file name to match the naming convention used across ingest clients."""
-        name = file_name.lower().replace("-", "_")
-        name = re.sub(r"\s+", "_", name.strip())
+        name = re.sub(r"[\s_-]+", "_", file_name.lower().strip())
         return f"hdx_{name}"
     
     
