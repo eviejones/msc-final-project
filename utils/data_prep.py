@@ -123,9 +123,8 @@ def get_clean_combined_data(
         )
 
     # ---- Fetch data (always fetch ACLED as the base dataset)
-    processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
-        download, remove_abyei, k, event_col
-    )
+    processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(k=k,           
+            event_col=event_col)
     combined_df = processed_acled_df
     predictor_cols = acled_predictor_cols
     logger.info("ACLED data processed.")
@@ -138,8 +137,6 @@ def get_clean_combined_data(
 
         if "food" in sources_lower:
             processed_food_df, food_predictor_cols = food.get_clean_data(
-                download=download,
-                remove_abyei=remove_abyei,
                 all_regions=all_regions,
                 all_months=all_months,
             )
@@ -150,7 +147,7 @@ def get_clean_combined_data(
             logger.info("Food prices data processed.")
         if "rain" in sources_lower:
             processed_rain_df, rain_predictor_cols = rain.get_clean_data(
-                download=download,
+                force_download=download,
                 remove_abyei=remove_abyei,
                 all_regions=all_regions,
                 all_months=all_months,
