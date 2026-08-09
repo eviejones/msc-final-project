@@ -2,64 +2,49 @@ import pandas as pd
 
 from ingest.hdx_client import HdxClient
 from utils.dates import *
-from utils.name_mapping import *
+from utils.name_mapping import SUDAN_STATE_MAPPING, clean_state_names
+from utils.constants import PRIMARY_COMMODITIES, COUNTRIES
+
 
 from utils.logger import get_logger
 
 logger = get_logger("WFP Processing")
 
 
-def read_food_prices(download: bool = True, remove_abyei: bool = True) -> pd.DataFrame:
-    """Fetches, filters, and cleans World Food Programme (WFP) food price data for Sudan
+def read_food_prices(
+    force_download: bool = False
+) -> pd.DataFrame:
+    """Fetches, filters, and cleans World Food Programme (WFP) food price data for selected countries
     from the HDX platform.
 
     This function retrieves raw CSV data, optionally includes the Abyei region from
-    the South Sudan dataset, and filters for primary commodities (Sorghum, Millet,
-    Wheat flour) sold at retail prices. It standardizes dates, admin regions, and
+    the South Sudan dataset, and filters for primary commodities (from constants) sold at retail prices. It standardizes dates, admin regions, and
     calculates a unified USD price per kilogram.
 
     Args:
-        download (bool, optional): If True, downloads fresh datasets from HDX.
-            If False, relies on local cached files. Defaults to True.
-        remove_abyei (bool, optional): If True, excludes the Abyei region. If False,
-            fetches the South Sudan dataset, extracts Abyei market data, and appends
-            it to the Sudan dataset. Defaults to True.
-
+        force_download (bool, optional): If True, bypasses any cached local files
+            and re-downloads fresh datasets from HDX. Defaults to False.
     Returns:
         pd.DataFrame: A cleaned DataFrame containing historical retail prices for
             specific commodities, with standardized state names, temporal periods,
             and calculated 'usdprice_per_kg'.
     """
     hdx = HdxClient()
+    
+    for country in COUNTRIES:
+        country_lower = country.lower().replace(" ", "-")
 
-    df_sudan = hdx.get_data(
-        dataset_name="wfp-food-prices-for-sudan",
-        file_name="Sudan - Food Prices",
-        file_type="csv",
-        download=download,
-    )
-
-    if remove_abyei:
-        df_combined = df_sudan
-    else:  # Load Abyei from South Sudan
-        df_south_sudan = hdx.get_data(
-            dataset_name="wfp-food-prices-for-south-sudan",
-            file_name="South Sudan - Food Prices",
+        df = hdx.get_data(
+            dataset_name=f"wfp-food-prices-for-{country_lower}",
+            file_name=f"{country} - Food Prices",
             file_type="csv",
-            download=download,
+            force_download=force_download,
         )
 
-        df_abyei = df_south_sudan[df_south_sudan["market"] == "Abyei"].copy()
-        df_abyei["admin1"] = "Abyei"
-
-        df_combined = pd.concat([df_sudan, df_abyei], ignore_index=True)
-
-    primary_commodities = ["Sorghum", "Millet", "Wheat flour"]
-
-    df_filtered = df_combined[
-        (df_combined["commodity"].isin(primary_commodities))
-        & (df_combined["pricetype"] == "Retail")
-        & (df_combined["priceflag"].isin(["actual", "aggregate"]))
+    df_filtered = df[
+        (df["commodity"].isin(PRIMARY_COMMODITIES))
+        & (df["pricetype"] == "Retail")
+        & (df["priceflag"].isin(["actual", "aggregate"]))
     ].copy()
 
     df_filtered_cols = df_filtered[
@@ -159,7 +144,9 @@ def process_and_pivot_food_prices(
 
 
 def get_clean_data(
-    download: bool = True, remove_abyei: bool = True, all_regions=None, all_months=None
+    force_download: bool = False,
+    all_regions=None,
+    all_months=None,
 ):
     """An orchestrator function that runs the full food price data pipeline.
 
@@ -169,10 +156,8 @@ def get_clean_data(
     sparsity-aware split finding.
 
     Args:
-        download (bool, optional): Indicates whether to download fresh data
-            from HDX. Defaults to True.
-        remove_abyei (bool, optional): Indicates whether to exclude Abyei market
-            data from South Sudan. Defaults to True.
+        force_download (bool, optional): Indicates whether to bypass cached
+            local files and download fresh data from HDX. Defaults to False.
         all_regions (array-like, optional): Array of all unique regions for the Cartesian spine.
         all_months (array-like, optional): Array of all target months for the Cartesian spine.
 
@@ -182,7 +167,7 @@ def get_clean_data(
             - list[str]: A list of column names identifying the predictor
               variables (the lagged price features).
     """
-    food_prices_df = read_food_prices(download, remove_abyei)
+    food_prices_df = read_food_prices(force_download=force_download)
     pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
 
     predictor_cols = [
