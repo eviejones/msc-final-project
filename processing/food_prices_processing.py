@@ -1,12 +1,10 @@
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
+from utils.constants import COUNTRY, PRIMARY_COMMODITIES
 from utils.dates import *
-from utils.name_mapping import SUDAN_STATE_MAPPING, clean_state_names
-from utils.constants import PRIMARY_COMMODITIES, COUNTRIES
-
-
 from utils.logger import get_logger
+from utils.name_mapping import clean_state_names
 
 logger = get_logger("WFP Processing")
 
@@ -14,8 +12,7 @@ logger = get_logger("WFP Processing")
 def read_food_prices(
     force_download: bool = False
 ) -> pd.DataFrame:
-    """Fetches, filters, and cleans World Food Programme (WFP) food price data for selected countries
-    from the HDX platform.
+    """Fetches, filters, and cleans World Food Programme (WFP) food price data for the selected country from the HDX platform.
 
     This function retrieves raw CSV data, optionally includes the Abyei region from
     the South Sudan dataset, and filters for primary commodities (from constants) sold at retail prices. It standardizes dates, admin regions, and
@@ -30,16 +27,15 @@ def read_food_prices(
             and calculated 'usdprice_per_kg'.
     """
     hdx = HdxClient()
-    
-    for country in COUNTRIES:
-        country_lower = country.lower().replace(" ", "-")
 
-        df = hdx.get_data(
-            dataset_name=f"wfp-food-prices-for-{country_lower}",
-            file_name=f"{country} - Food Prices",
-            file_type="csv",
-            force_download=force_download,
-        )
+    country_lower = COUNTRY.lower().replace(" ", "-")
+
+    df = hdx.get_data(
+        dataset_name=f"wfp-food-prices-for-{country_lower}",
+        file_name=f"{COUNTRY} - Food Prices",
+        file_type="csv",
+        force_download=force_download,
+    )
 
     df_filtered = df[
         (df["commodity"].isin(PRIMARY_COMMODITIES))
@@ -165,7 +161,7 @@ def get_clean_data(
         tuple: A tuple containing:
             - pd.DataFrame: The final machine-learning-ready dataset.
             - list[str]: A list of column names identifying the predictor
-              variables (the lagged price features).
+                variables (the lagged price features).
     """
     food_prices_df = read_food_prices(force_download=force_download)
     pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
