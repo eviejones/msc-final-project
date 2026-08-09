@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
+from utils.constants import FORCE_DOWNLOAD
 from utils.logger import get_logger
 
 logger = get_logger("ACLED ingest")
@@ -126,7 +127,6 @@ class AcledClient:
         end_date: str,
         *,
         event_types=None,
-        force_download: bool = False,
     ):
         """Gets data for a specified country and dates from the ACLED API.
 
@@ -135,8 +135,6 @@ class AcledClient:
             start_date (str): Start date for pulling data. Should be in format YYYY-MM-DD.
             end_date (str): End date for pulling data. Should be in format YYYY-MM-DD
             event_types (list[str]): List of event types to pull data from. Event types must match ACLED event types.
-            force_download (bool): If True, bypass any cached CSV and re-fetch from the API.
-
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
         """
@@ -148,7 +146,7 @@ class AcledClient:
         self.end_date = end_date
         self.event_types = event_types
 
-        if not force_download:
+        if not FORCE_DOWNLOAD:
             cached_df = self._read_data(country)
             if not cached_df.empty:
                 return cached_df

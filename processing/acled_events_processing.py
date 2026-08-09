@@ -4,7 +4,7 @@ import pandas as pd
 from ingest.acled_client import AcledClient
 from utils.dates import *
 from utils.logger import get_logger
-from utils.name_mapping import COUNTRIES
+from utils.constants import COUNTRY
 
 logger = get_logger("Events processing")
 
@@ -211,8 +211,7 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(remove_abyei=True, k: float = 0.5, event_col: str = "event_type", force_download: bool = False
-):
+def get_clean_data(remove_abyei=True, k: float = 0.5, event_col: str = "event_type"):
     """Gets the clean ACLED event data, both raw and processed with target variables.
 
     Args:
@@ -223,7 +222,7 @@ def get_clean_data(remove_abyei=True, k: float = 0.5, event_col: str = "event_ty
     """
 
     acled = AcledClient()
-    all_data = acled.get_data(countries=COUNTRIES, start_date=start_date, end_date=end_date, force_download=download)
+    all_data = acled.get_data(countries=COUNTRIES, start_date=start_date, end_date=end_date)
 
     if remove_abyei:
         all_data = all_data[

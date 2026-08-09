@@ -9,18 +9,13 @@ from utils.name_mapping import clean_state_names
 logger = get_logger("WFP Processing")
 
 
-def read_food_prices(
-    force_download: bool = False
-) -> pd.DataFrame:
+def read_food_prices() -> pd.DataFrame:
     """Fetches, filters, and cleans World Food Programme (WFP) food price data for the selected country from the HDX platform.
 
     This function retrieves raw CSV data, optionally includes the Abyei region from
     the South Sudan dataset, and filters for primary commodities (from constants) sold at retail prices. It standardizes dates, admin regions, and
     calculates a unified USD price per kilogram.
 
-    Args:
-        force_download (bool, optional): If True, bypasses any cached local files
-            and re-downloads fresh datasets from HDX. Defaults to False.
     Returns:
         pd.DataFrame: A cleaned DataFrame containing historical retail prices for
             specific commodities, with standardized state names, temporal periods,
@@ -33,8 +28,7 @@ def read_food_prices(
     df = hdx.get_data(
         dataset_name=f"wfp-food-prices-for-{country_lower}",
         file_name=f"{COUNTRY} - Food Prices",
-        file_type="csv",
-        force_download=force_download,
+        file_type="csv"
     )
 
     df_filtered = df[
@@ -140,7 +134,6 @@ def process_and_pivot_food_prices(
 
 
 def get_clean_data(
-    force_download: bool = False,
     all_regions=None,
     all_months=None,
 ):
@@ -152,8 +145,6 @@ def get_clean_data(
     sparsity-aware split finding.
 
     Args:
-        force_download (bool, optional): Indicates whether to bypass cached
-            local files and download fresh data from HDX. Defaults to False.
         all_regions (array-like, optional): Array of all unique regions for the Cartesian spine.
         all_months (array-like, optional): Array of all target months for the Cartesian spine.
 
@@ -163,7 +154,7 @@ def get_clean_data(
             - list[str]: A list of column names identifying the predictor
                 variables (the lagged price features).
     """
-    food_prices_df = read_food_prices(force_download=force_download)
+    food_prices_df = read_food_prices()
     pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
 
     predictor_cols = [
