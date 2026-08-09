@@ -1,6 +1,5 @@
 import pandas as pd
 
-countries = ["Sudan"]
 start_date = "2017-07-01"  # TODO validation for 6 month warm up period
 end_date = "2024-12-31"
 
