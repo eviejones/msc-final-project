@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 from sklearn.decomposition import PCA
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from utils.dates import get_padded_index, train_start_date, end_date
+from utils.dates import (
+    END_DATE,
+    TRAIN_START_DATE,
+    WARMUP_START_DATE_1_MONTH,
+    get_padded_index,
+)
 from utils.logger import get_logger
 
 logger = get_logger("Text processing")
@@ -166,9 +171,9 @@ def get_monthly_regional_embeddings(
     """
     Calculates document embeddings and aggregates them by region ('admin1') and month.
     """
-    start_period = pd.Period(train_start_date, freq="M")
+    start_period = pd.Period(TRAIN_START_DATE, freq="M")
     padded_start = start_period - 1
-    end_period = pd.Period(end_date, freq="M")
+    end_period = pd.Period(END_DATE, freq="M")
 
     df = df.copy()
     df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
@@ -274,8 +279,8 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     """
     df = df.copy()
 
-    df_padded, final_regions, padded_months, start_period = get_padded_index(
-        df, all_regions, all_months, train_start_date, end_date
+    df_padded, final_regions, padded_months, = get_padded_index(
+        df, all_regions, all_months, WARMUP_START_DATE_1_MONTH
     )
 
     full_padded_index = pd.MultiIndex.from_product(
@@ -287,27 +292,7 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
         .reindex(full_padded_index)
         .reset_index()
     )
-    #
-    # df = df.copy()
-    #
-    # start_period = pd.Period(train_start_date, freq="M")
-    # padded_start = start_period - 1
-    #
-    # if all_months is None:
-    #     max_month = df["year_month"].max()
-    # else:
-    #     max_month = all_months.max()
-    #
-    # padded_all_months = pd.period_range(padded_start, max_month, freq="M")
-    #
-    # full_index = pd.MultiIndex.from_product(
-    #     [all_regions, padded_all_months], names=["region", "year_month"]
-    # )
-    #
-    # df_grouped = (
-    #     df.set_index(["region", "year_month"]).reindex(full_index).reset_index()
-    # )
-
+    
     emb_cols = [c for c in df_grouped.columns if c.startswith("emb_")]
 
     # Create a col to flag if there are actually 0 events
@@ -325,7 +310,7 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
     df_grouped["has_acled_event"] = (
         df_grouped["has_acled_event"].fillna(0).astype(int)
     )
-    df_grouped = df_grouped[df_grouped["year_month"] >= start_period].copy() # Remove buffered data
+    df_grouped = df_grouped[df_grouped["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")].copy() # Remove buffered data
 
     return df_grouped
 
