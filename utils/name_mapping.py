@@ -15,16 +15,21 @@ SUDAN_STATE_MAPPING = {
 
 
 def clean_state_names(value):
-    return SUDAN_STATE_MAPPING.get(value, value) # TODO make this work for other countries
+    return SUDAN_STATE_MAPPING.get(
+        value, value
+    )  # TODO make this work for other countries
 
 
 def get_iso3(country: str) -> str:
     """Resolves a country name to its three letter iso code."""
     return pycountry.countries.lookup(country).alpha_3
 
+
 def pcode_mapping(country: str, admin_level: int = 1) -> dict:
     """Fetches the admin boundaries for a country to map the pcode names from the rainfall data set to clean region names."""
-    logger.info("Creating a PCODE map for rainfall data. This may take a few seconds...")
+    logger.info(
+        "Creating a PCODE map for rainfall data. This may take a few seconds..."
+    )
     iso3 = get_iso3(country).lower()
 
     hdx = HdxClient()
@@ -36,6 +41,6 @@ def pcode_mapping(country: str, admin_level: int = 1) -> dict:
     if boundaries is None:
         raise ValueError(f"Could not fetch admin{admin_level} boundaries for {country}")
 
-    pcode_col = 'adm1_pcode' # Manually setting this to admin level 1 for now 
-    name_col =  'adm1_name'
+    pcode_col = "adm1_pcode"  # Manually setting this to admin level 1 for now
+    name_col = "adm1_name"
     return dict(zip(boundaries[pcode_col], boundaries[name_col]))
