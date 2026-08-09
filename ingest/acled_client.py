@@ -1,5 +1,4 @@
 import os
-from datetime import datetime, timezone
 
 import pandas as pd
 import requests
@@ -56,22 +55,20 @@ class AcledClient:
             f"Failed to get access token: {response.status_code} {response.text}"
         )
 
-    def _validate_dates(self, start_date: str, end_date: str) -> None:
-        """Validates that dates are in YYYY-MM-DD format and logically ordered."""
+    def _validate_dates(self, start_date, end_date) -> None:
+        """Validates that dates are parseable (str in YYYY-MM-DD or pd.Timestamp) and logically ordered."""
         try:
-            start = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-            end = datetime.strptime(end_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            start = pd.to_datetime(start_date)
+            end = pd.to_datetime(end_date)
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                "Dates must be a string in YYYY-MM-DD format or a pd.Timestamp."
+            ) from e
 
-            if start > end:
-                raise ValueError(
-                    f"start_date ({start_date}) cannot be after end_date ({end_date})."
-                )
-        except ValueError as e:
-            if "does not match format" in str(e) or "unconverted data" in str(e):
-                raise ValueError(
-                    "Dates must be provided in the format YYYY-MM-DD."
-                ) from e
-            raise
+        if start > end:
+            raise ValueError(
+                f"start_date ({start_date}) cannot be after end_date ({end_date})."
+            )
 
     def _validate_country(self, country: str) -> None:
         """Validates that the country name is a non-empty string."""
@@ -123,8 +120,8 @@ class AcledClient:
     def get_data(
         self,
         country: str,
-        start_date: str,
-        end_date: str,
+        start_date: str | pd.Timestamp,
+        end_date: str | pd.Timestamp,
         *,
         event_types=None,
     ):
@@ -132,8 +129,10 @@ class AcledClient:
 
         Args:
             country (str): Country to get data from.
-            start_date (str): Start date for pulling data. Should be in format YYYY-MM-DD.
-            end_date (str): End date for pulling data. Should be in format YYYY-MM-DD
+            start_date (str | pd.Timestamp): Start date for pulling data. Accepts a
+                YYYY-MM-DD string or a pd.Timestamp.
+            end_date (str | pd.Timestamp): End date for pulling data. Accepts a
+                YYYY-MM-DD string or a pd.Timestamp.
             event_types (list[str]): List of event types to pull data from. Event types must match ACLED event types.
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
@@ -142,8 +141,8 @@ class AcledClient:
         self._validate_country(country)
 
         self.country = country
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_date = pd.to_datetime(start_date).strftime("%Y-%m-%d")
+        self.end_date = pd.to_datetime(end_date).strftime("%Y-%m-%d")
         self.event_types = event_types
 
         if not FORCE_DOWNLOAD:
