@@ -48,8 +48,11 @@ def split_data(
         pd.Series: All target Y values.
         pd.DataFrame: All features dataframe.
     """
+    start_period = pd.Period(start_date, freq="M")
+    end_period = pd.Period(end_date, freq="M")
+
     split_df = df[
-        (df["year_month"] >= start_date) & (df["year_month"] <= end_date)
+        (df["year_month"] >= start_period) & (df["year_month"] <= end_period)
     ].copy()
 
     y = split_df[target_col].copy()
@@ -60,8 +63,6 @@ def split_data(
 
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
-    download: bool = False,
-    remove_abyei: bool = True,
     k: float = 0.5,
     event_col: str = "event_type",
 ) -> tuple[pd.DataFrame, list[str]]:
@@ -75,10 +76,6 @@ def get_clean_combined_data(
         data_sources (list[str] | None, optional): A list of additional data sources
             to merge. Valid options include "food" and "rain" (case-insensitive).
             Defaults to None.
-        download (bool, optional): If True, forces a fresh download of the data
-            instead of using cached versions. Defaults to False.
-        remove_abyei (bool, optional): If True, filters out data for the Abyei
-            region. Defaults to True.
         k (float): The number of standard deviations above the mean to set the
             target threshold. Defaults to 0.5.
         event_col (str): Whether to use event_type or sub_event_type column. Defaults to event_type.
@@ -122,8 +119,9 @@ def get_clean_combined_data(
         )
 
     # ---- Fetch data (always fetch ACLED as the base dataset)
-    processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(k=k,           
-            event_col=event_col)
+    processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
+        k=k, event_col=event_col
+    )
     combined_df = processed_acled_df
     predictor_cols = acled_predictor_cols
     logger.info("ACLED data processed.")
@@ -146,8 +144,6 @@ def get_clean_combined_data(
             logger.info("Food prices data processed.")
         if "rain" in sources_lower:
             processed_rain_df, rain_predictor_cols = rain.get_clean_data(
-                force_download=download,
-                remove_abyei=remove_abyei,
                 all_regions=all_regions,
                 all_months=all_months,
             )
@@ -157,17 +153,12 @@ def get_clean_combined_data(
             predictor_cols = predictor_cols + rain_predictor_cols
             logger.info("Rainfall data processed.")
         if "text" in sources_lower:
-            if download:
-                processed_notes_df, notes_prediction_cols = notes.get_clean_data(
-                    calculate=True,
-                    df=raw_acled_df,
-                    all_regions=all_regions,
-                    all_months=all_months,  # Calculates embeddings, this could take a while
-                )
-            else:
-                processed_notes_df, notes_prediction_cols = notes.get_clean_data(
-                    False, None, all_regions, all_months
-                )  # Read local embeddings
+            processed_notes_df, notes_prediction_cols = notes.get_clean_data(
+                df=raw_acled_df,
+                all_regions=all_regions,
+                all_months=all_months,
+                # Reads locally saved embeddings from unless FORCE_DOWNLOAD is set
+            )
             combined_df = combined_df.merge(
                 processed_notes_df, on=["region", "year_month"], how="left"
             )
