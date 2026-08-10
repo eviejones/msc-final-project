@@ -131,7 +131,7 @@ def pre_process_data(
     # Define what type of column each is
     event_cols = pivot_df.columns.drop(["admin1", "year_month"]).tolist()
     current_event_cols = event_cols + ["fatalities"]
-    lagged_event_cols = ["rolling_mean_6m", "rolling_std_6m", "escalation_threshold"]
+    lagged_event_cols = ["rolling_mean_6m", "rolling_std_6m"]
     predictor_cols = current_event_cols + lagged_event_cols
 
     combined_df[current_event_cols] = (
