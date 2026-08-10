@@ -2,6 +2,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import shap
 import xgboost as xgb
 from sklearn.metrics import (
     average_precision_score,
@@ -29,6 +30,45 @@ from utils.logger import get_logger
 
 logger = get_logger("Train model")
 
+# Ref: https://shap.readthedocs.io/en/latest/example_notebooks/overviews/An%20introduction%20to%20explainable%20AI%20with%20Shapley%20values.html
+def compute_shap_importance(
+    model: xgb.XGBClassifier,
+    X: pd.DataFrame,
+    predictor_cols: list[str],
+    top_n: int = 30,
+) -> pd.DataFrame:
+    """
+    Computes SHAP values for each feature from a fitted XGBoost model.
+
+    Args:
+        model (xgb.XGBClassifier): A fitted XGBoost classifier.
+        X (pd.DataFrame): Feature matrix to explain (e.g. X_train). For large
+            datasets, consider passing a random sample (e.g. X.sample(2000,
+            random_state=7)) to keep runtime reasonable.
+        predictor_cols (list[str]): Column names corresponding to X's columns,
+            in order. Pass the final_predictor_cols from train_evaluate_model
+            (post-PCA names if use_pca=True).
+        top_n (int, optional): Number of top features to return. Defaults to 30.
+
+    Returns:
+        pd.DataFrame: Columns ["feature", "mean_abs_shap"], sorted descending,
+            truncated to top_n rows.
+    """
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X)
+
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1]
+
+    mean_abs_shap = np.abs(shap_values).mean(axis=0)
+
+    importance_df = (
+        pd.DataFrame({"feature": predictor_cols, "mean_abs_shap": mean_abs_shap})
+        .sort_values("mean_abs_shap", ascending=False)
+        .reset_index(drop=True)
+    )
+    return importance_df.head(top_n)
+
 
 def train_evaluate_model(
     processed_df: pd.DataFrame,
@@ -36,7 +76,9 @@ def train_evaluate_model(
     params: dict[str, Any],
     best_params: bool = False,
     use_pca: bool = True,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+    compute_shap: bool = False,
+    shap_sample_size: int | None = 2000,
+) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
 
@@ -55,12 +97,23 @@ def train_evaluate_model(
             model directly using the provided `params`. Defaults to False.
         use_pca (bool, optional): If True, applies PCA to the embedding features
             (fitting only on the training set to prevent leakage). Defaults to True.
+        compute_shap (bool, optional): If True, computes SHAP feature importance on
+            the trained model using the training set (or a sample of it, see
+            shap_sample_size). Adds runtime, so leave False for sweep/search runs
+            and only enable for final chosen configs. Defaults to False.
+        shap_sample_size (int | None, optional): If set and compute_shap is True,
+            SHAP is computed on a random sample of this many training rows instead
+            of the full training set, to keep runtime manageable. Set to None to
+            use the full training set. Defaults to 2000.
 
     Returns:
-        tuple[dict[str, Any], dict[str, Any]]: A tuple containing:
+        tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None]: A tuple containing:
             - results (dict): A dictionary of evaluation metrics (AUPRC, Precision, Recall, F1)
-              for both onset and active datasets, as well as the optimal threshold.
-            - fitted_best_params (dict): A dictionary of the best hyperparameters used for the model.
+                for both onset and active datasets, as well as the optimal threshold.
+            - fitted_best_params (dict): A dictionary of the best hyperparameters used for the
+                model.
+            - shap_importance (pd.DataFrame | None): Top features by mean absolute SHAP
+                value if compute_shap=True, otherwise None.
 
     Raises:
         TypeError: If arguments are of incorrect types.
@@ -191,6 +244,16 @@ def train_evaluate_model(
         best_model = random_search.best_estimator_
         fitted_best_params = random_search.best_params_
 
+    shap_importance = None
+    if compute_shap:
+        if shap_sample_size is not None and len(X_train) > shap_sample_size:
+            X_shap = X_train.sample(shap_sample_size, random_state=7)
+        else:
+            X_shap = X_train
+        shap_importance = compute_shap_importance(
+            best_model, X_shap, final_predictor_cols
+        )
+
     oof_y_true, oof_y_proba = timeseries_cross_val_predict(
         best_model, X_train, y_train, grouped_timeseries_cv
     )
@@ -236,4 +299,4 @@ def train_evaluate_model(
     fitted_best_params["n_splits"] = params["n_splits"]
     fitted_best_params["event_col"] = params["event_col"]
 
-    return results, fitted_best_params
+    return results, fitted_best_params, shap_importance
