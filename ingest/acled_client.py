@@ -4,8 +4,8 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-# from utils.constants import FORCE_DOWNLOAD
-FORCE_DOWNLOAD = True
+from utils.constants import FORCE_DOWNLOAD
+
 from utils.logger import get_logger
 
 logger = get_logger("AcledClient")
