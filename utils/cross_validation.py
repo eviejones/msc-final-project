@@ -53,7 +53,10 @@ def verify_cv_splits(df, cv_splits, date_column="year_month"):
             print(f"Overlapping months: {overlap}")
 
         if train_dates[-1] >= test_dates[0]:
-            print("Training window overlaps or exceeds the test window!")
+            raise ValueError(
+                f"Fold {fold + 1}: training window ({train_dates[-1]}) overlaps or "
+                f"exceeds the test window ({test_dates[0]}) - CV split is invalid."
+            )
 
         print("-" * 30)
 
