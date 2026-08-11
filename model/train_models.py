@@ -78,7 +78,8 @@ def train_evaluate_model(
     use_pca: bool = True,
     compute_shap: bool = False,
     shap_sample_size: int | None = 2000,
-) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None]:
+    return_onset_predictions: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
 
@@ -105,15 +106,22 @@ def train_evaluate_model(
             SHAP is computed on a random sample of this many training rows instead
             of the full training set, to keep runtime manageable. Set to None to
             use the full training set. Defaults to 2000.
+        return_onset_predictions (bool, optional): If True, also returns a
+            DataFrame of per-row onset predictions (region, year_month,
+            y_true, y_pred_proba, y_pred) - useful for slicing performance
+            by sub-period (e.g. before/after a specific date). Defaults to
+            False.
 
     Returns:
-        tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None]: A tuple containing:
+        tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]: A tuple containing:
             - results (dict): A dictionary of evaluation metrics (AUPRC, Precision, Recall, F1)
                 for both onset and active datasets, as well as the optimal threshold.
             - fitted_best_params (dict): A dictionary of the best hyperparameters used for the
                 model.
             - shap_importance (pd.DataFrame | None): Top features by mean absolute SHAP
                 value if compute_shap=True, otherwise None.
+            - onset_predictions (pd.DataFrame | None): Per-row onset predictions if
+                return_onset_predictions=True, otherwise None.
 
     Raises:
         TypeError: If arguments are of incorrect types.
@@ -271,6 +279,14 @@ def train_evaluate_model(
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
     y_pred_custom_onset = (y_pred_proba_onset >= optimal_threshold).astype(int)
 
+    # Create onset_predictions, used for testing in the onset windows
+    onset_predictions = None
+    if return_onset_predictions:
+        onset_predictions = onset_df[["region", "year_month"]].copy()
+        onset_predictions["y_true"] = y_onset.values
+        onset_predictions["y_pred_proba"] = y_pred_proba_onset
+        onset_predictions["y_pred"] = y_pred_custom_onset
+
     # Evaluate on active test set
     y_pred_proba_active = best_model.predict_proba(X_active)[:, 1]
     y_pred_custom_active = (y_pred_proba_active >= optimal_threshold).astype(int)
@@ -303,4 +319,4 @@ def train_evaluate_model(
     fitted_best_params["n_splits"] = params["n_splits"]
     fitted_best_params["event_col"] = params["event_col"]
 
-    return results, fitted_best_params, shap_importance
+    return results, fitted_best_params, shap_importance, onset_predictions
