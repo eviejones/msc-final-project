@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 from dotenv import load_dotenv
 from sklearn.decomposition import PCA
+from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
 from utils.constants import FORCE_DOWNLOAD, TRAIN_START_DATE
@@ -114,9 +115,7 @@ def get_embedding(
     """
     inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
     with torch.no_grad():
-        outputs = model(**inputs)  # Model is now safely passed in
-
-    # Mean pooling across the sequence length dimension
+        outputs = model(**inputs)
     return outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
 
 
@@ -141,7 +140,8 @@ def get_monthly_regional_embeddings(
         f"Calculating embeddings for {len(df_filtered)} rows. This might take a while."
     )
 
-    df_filtered["notes_embeddings"] = df_filtered["notes_cleaned"].apply(
+    tqdm.pandas(desc="Generating embeddings")
+    df_filtered["notes_embeddings"] = df_filtered["notes_cleaned"].progress_apply(
         get_embedding, args=(tokenizer, model)
     )
 
