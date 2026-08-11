@@ -261,7 +261,11 @@ def train_evaluate_model(
     # ---- Optimisation
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
-    optimal_threshold = thresholds[np.argmax(f1_scores)]
+    # optimal_threshold = thresholds[np.argmax(f1_scores)]
+    
+    max_f1 = f1_scores.max()
+    tied_indices = np.flatnonzero(f1_scores == max_f1)
+    optimal_threshold = thresholds[tied_indices[-1]]
 
     # Evaluate on onset test set
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
