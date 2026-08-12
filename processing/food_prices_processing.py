@@ -116,15 +116,14 @@ def process_and_pivot_food_prices(
     ).reset_index()
 
     df_pivoted.columns.name = None
-    df_pivoted = df_pivoted.rename(
-        columns={
-            "Millet": "price_millet",
-            "Sorghum": "price_sorghum",
-            "Wheat flour": "price_wheat_flour",
-        }
-    )
+    df_pivoted.columns.name = None
+    rename_map = {
+        commodity: f"price_{commodity.lower().replace(' ', '_')}"
+        for commodity in PRIMARY_COMMODITIES
+    }
+    df_pivoted = df_pivoted.rename(columns=rename_map)
 
-    price_cols = ["price_millet", "price_sorghum", "price_wheat_flour"]
+    price_cols = [c for c in df_pivoted.columns if c.startswith("price_")]
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
     df_pivoted = df_pivoted[
         df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
