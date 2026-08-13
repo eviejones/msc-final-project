@@ -113,9 +113,7 @@ def get_clean_combined_data(
         raise TypeError(
             f"k must be a numeric value (float or int), got {type(k).__name__}"
         )
-    if k > 2:
-        raise ValueError(f"k must be less than or equal to 2, got {k}")
-
+        
     # Validate event_col
     valid_event_cols = {"event_type", "sub_event_type"}
     if event_col not in valid_event_cols:
