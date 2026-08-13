@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 
-from utils.constants import FORCE_DOWNLOAD, TRAIN_START_DATE
+from utils.constants import COUNTRY, FORCE_DOWNLOAD, TRAIN_START_DATE
 from utils.dates import (
     END_DATE,
     WARMUP_START_DATE_1_MONTH,
@@ -20,9 +20,9 @@ logger = get_logger("Text processing")
 
 load_dotenv()
 
-EMBEDDINGS_PATH = "data/acled/acled_monthly_regional_embeddings.pkl"
+EMBEDDINGS_PATH = f"data/acled/acled_{COUNTRY.lower()}_monthly_regional_embeddings.pkl"
 EMBEDDINGS_PATH_CONFLICT_ONLY = (
-    "data/acled/acled_monthly_regional_embeddings_conflict_only.pkl"
+    f"data/acled/acled_{COUNTRY.lower()}_monthly_regional_embeddings_conflict_only.pkl"
 )
 
 
@@ -119,12 +119,61 @@ def get_embedding(
     return outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
 
 
+# def get_monthly_regional_embeddings(
+#     df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
+# ) -> pd.DataFrame:
+#     """
+#     Calculates document embeddings and aggregates them by region ('admin1') and month.
+#     """
+#     padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
+
+#     df = df.copy()
+#     if not isinstance(df["year_month"].dtype, pd.PeriodDtype):
+#         df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
+
+#     df_filtered = df[
+#         (df["year_month"] >= padded_start)
+#         & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
+#     ].copy()
+
+#     logger.warning(
+#         f"Calculating embeddings for {len(df_filtered)} rows. This might take a while."
+#     )
+
+#     tqdm.pandas(desc="Generating embeddings")
+#     df_filtered["notes_embeddings"] = df_filtered["notes_cleaned"].progress_apply(
+#         get_embedding, args=(tokenizer, model)
+#     )
+
+#     embedding_cols = pd.DataFrame(
+#         df_filtered["notes_embeddings"].tolist(), index=df_filtered.index
+#     )
+#     embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
+
+#     df_expanded = pd.concat(
+#         [df_filtered[["admin1", "year_month"]], embedding_cols], axis=1
+#     )
+#     df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
+
+#     # Group by region and month, then average the embeddings
+#     monthly_region_embeddings = (
+#         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
+#     )
+
+#     monthly_region_embeddings = monthly_region_embeddings.rename(
+#         columns={"admin1": "region"}
+#     )
+
+#     return monthly_region_embeddings
+
+## TODO clean !!
 def get_monthly_regional_embeddings(
-    df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
+    df: pd.DataFrame,
+    tokenizer: PreTrainedTokenizer,
+    model: PreTrainedModel,
+    batch_size: int = 64,  # Bumped to 64 for your M5 Max!
 ) -> pd.DataFrame:
-    """
-    Calculates document embeddings and aggregates them by region ('admin1') and month.
-    """
+    """Calculates document embeddings in batches and aggregates them by region ('admin1') and month."""
     padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
 
     df = df.copy()
@@ -140,31 +189,63 @@ def get_monthly_regional_embeddings(
         f"Calculating embeddings for {len(df_filtered)} rows. This might take a while."
     )
 
-    tqdm.pandas(desc="Generating embeddings")
-    df_filtered["notes_embeddings"] = df_filtered["notes_cleaned"].progress_apply(
-        get_embedding, args=(tokenizer, model)
-    )
+    texts = df_filtered["notes_cleaned"].fillna("").astype(str).tolist()
+    all_embeddings = []
 
-    embedding_cols = pd.DataFrame(
-        df_filtered["notes_embeddings"].tolist(), index=df_filtered.index
+    # MAcbook assignment
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+        
+    model.to(device)
+    model.eval()
+
+    # Process in batches
+    for i in tqdm(
+        range(0, len(texts), batch_size), desc="Generating Embeddings"
+    ):
+        batch_texts = texts[i : i + batch_size]
+
+        inputs = tokenizer(
+            batch_texts,
+            return_tensors="pt",
+            truncation=True,
+            padding=True,
+            max_length=512,
+        ).to(device)
+
+        with torch.no_grad():
+            outputs = model(**inputs)
+            embeddings = (
+                outputs.last_hidden_state.mean(dim=1).cpu().numpy()
+            )
+
+        all_embeddings.append(embeddings)
+
+    embedding_matrix = np.vstack(all_embeddings)
+    embedding_dim = embedding_matrix.shape[1]
+
+    emb_cols = [f"emb_{j}" for j in range(embedding_dim)]
+    df_embeddings = pd.DataFrame(
+        embedding_matrix, columns=emb_cols, index=df_filtered.index
     )
-    embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
 
     df_expanded = pd.concat(
-        [df_filtered[["admin1", "year_month"]], embedding_cols], axis=1
+        [df_filtered[["admin1", "year_month"]], df_embeddings], axis=1
     )
-    df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
+    df_expanded = df_expanded.loc[
+        :, ~df_expanded.columns.duplicated(keep="first")
+    ]
 
-    # Group by region and month, then average the embeddings
+    # Group by region and month, then average the vector spaces
     monthly_region_embeddings = (
         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
     )
 
-    monthly_region_embeddings = monthly_region_embeddings.rename(
-        columns={"admin1": "region"}
-    )
-
-    return monthly_region_embeddings
+    return monthly_region_embeddings.rename(columns={"admin1": "region"})
 
 
 def apply_pca_train_only(
@@ -314,6 +395,7 @@ def get_clean_data(
     embeddings_path = (
         EMBEDDINGS_PATH_CONFLICT_ONLY if conflict_only else EMBEDDINGS_PATH
     )
+    
 
     if not FORCE_DOWNLOAD and os.path.exists(embeddings_path):
         logger.info(f"Reading local file: {embeddings_path}")
