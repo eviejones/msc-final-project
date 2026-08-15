@@ -166,6 +166,7 @@ def get_embedding(
 
 #     return monthly_region_embeddings
 
+
 ## TODO clean !!
 def get_monthly_regional_embeddings(
     df: pd.DataFrame,
@@ -199,14 +200,12 @@ def get_monthly_regional_embeddings(
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-        
+
     model.to(device)
     model.eval()
 
     # Process in batches
-    for i in tqdm(
-        range(0, len(texts), batch_size), desc="Generating Embeddings"
-    ):
+    for i in tqdm(range(0, len(texts), batch_size), desc="Generating Embeddings"):
         batch_texts = texts[i : i + batch_size]
 
         inputs = tokenizer(
@@ -219,9 +218,7 @@ def get_monthly_regional_embeddings(
 
         with torch.no_grad():
             outputs = model(**inputs)
-            embeddings = (
-                outputs.last_hidden_state.mean(dim=1).cpu().numpy()
-            )
+            embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
 
         all_embeddings.append(embeddings)
 
@@ -236,9 +233,7 @@ def get_monthly_regional_embeddings(
     df_expanded = pd.concat(
         [df_filtered[["admin1", "year_month"]], df_embeddings], axis=1
     )
-    df_expanded = df_expanded.loc[
-        :, ~df_expanded.columns.duplicated(keep="first")
-    ]
+    df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
 
     # Group by region and month, then average the vector spaces
     monthly_region_embeddings = (
@@ -395,7 +390,6 @@ def get_clean_data(
     embeddings_path = (
         EMBEDDINGS_PATH_CONFLICT_ONLY if conflict_only else EMBEDDINGS_PATH
     )
-    
 
     if not FORCE_DOWNLOAD and os.path.exists(embeddings_path):
         logger.info(f"Reading local file: {embeddings_path}")

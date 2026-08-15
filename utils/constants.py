@@ -31,9 +31,8 @@ ACTIVE_END_DATE = pd.to_datetime("2025-12-31")
 
 
 # TRAIN_START_DATE = pd.to_datetime("2015-07-01")
-# TRAIN_END_DATE   = pd.to_datetime("2020-06-30")   
+# TRAIN_END_DATE   = pd.to_datetime("2020-06-30")
 # ONSET_START_DATE = pd.to_datetime("2020-07-01")
-# ONSET_END_DATE   = pd.to_datetime("2021-06-30")  
+# ONSET_END_DATE   = pd.to_datetime("2021-06-30")
 # ACTIVE_START_DATE = pd.to_datetime("2021-07-01")
 # ACTIVE_END_DATE  = pd.to_datetime("2022-06-30")
-

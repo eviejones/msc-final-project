@@ -99,7 +99,6 @@ def pre_process_data(
     if not isinstance(df["year_month"].dtype, pd.PeriodDtype):
         df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
 
-
     pivot_df = pd.pivot_table(
         df,
         values="event_id_cnty",

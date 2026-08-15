@@ -5,7 +5,6 @@ import requests
 from dotenv import load_dotenv
 
 from utils.constants import FORCE_DOWNLOAD
-
 from utils.logger import get_logger
 
 logger = get_logger("AcledClient")
@@ -117,8 +116,7 @@ class AcledClient:
         else:
             logger.warning(f"No saved data found for {country_str}.")
             return pd.DataFrame()
-        
-        
+
     def _mark_conflict_events(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Takes the ACLED dataframe and marks event as conflict (1) or not conflict (0).
