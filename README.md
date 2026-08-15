@@ -9,10 +9,9 @@ text embeddings of ACLED event notes, feeding an XGBoost classifier.
 ## Installation
 
 1. Clone the repository and move into it (`cd`).
-
 2. Create a virtual environment (Python 3.13 was used for this project):
 
-    ```
+   ```
    python -m venv .venv
    ```
 
@@ -27,7 +26,6 @@ text embeddings of ACLED event notes, feeding an XGBoost classifier.
    # macOS / Linux
    source .venv/bin/activate
    ```
-
 3. Install dependencies:
 
    ```
@@ -72,13 +70,13 @@ VS Code's notebook UI with the `.venv` kernel selected).
 date windows the pipelines run against:
 
 - `COUNTRY`  country name to pull ACLED/HDX data for (must resolve via `pycountry`).
-- `PRIMARY_COMMODITIES` - food commodities to include from the WFP food price data. This is set as a constant as different countries rely more heavily on different commodities. 
+- `PRIMARY_COMMODITIES` - food commodities to include from the WFP food price data. This is set as a constant as different countries rely more heavily on different commodities.
 - `TRAIN_START_DATE` / `TRAIN_END_DATE` - the training window.
 - `ONSET_START_DATE` / `ONSET_END_DATE` - the near-term test window (used to check
   performance right at the start of an escalation).
 - `ACTIVE_START_DATE` / `ACTIVE_END_DATE` - the longer-run test window.
 - `FORCE_DOWNLOAD` - when `True`, re-downloads/re-computes all data (ACLED, HDX,
-  text embeddings) instead of reading local caches. This should be set to `False` unless you want to delete and redownload everything. 
+  text embeddings) instead of reading local caches. This should be set to `False` unless you want to delete and redownload everything.
 
 The file includes a commented-out Ethiopia configuration as an example of switching
 countries. When switching `COUNTRY`, region name cleanup in
@@ -138,7 +136,6 @@ To evaluate a different configuration, copy one of the `model_*_config` /
 `model_*_xgb_params` cell pairs, adjust the values (e.g. the winning params surfaced
 by `run_test_models.ipynb`), and call `run_model(your_config, your_params)`.
 
-
 ### `run_test_models.ipynb` - hyperparameter/config search
 
 Sweeps many combinations of feature sets, `k`, `event_col`, PCA and cross-validation
@@ -152,8 +149,8 @@ This should only be used to find the best parameter selection and test the diffe
    ```
    mlflow server --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1 --port 5000
    ```
-
 2. Run the notebook cells in order. It will:
+
    - Load `model/completed_runs.txt` to skip configs that have already finished
      (safe to stop and resume).
    - Fetch/cache the ACLED, food, rain and text data needed for each feature
@@ -163,7 +160,6 @@ This should only be used to find the best parameter selection and test the diffe
      append a backup row to `evaluation/{COUNTRY}_results.csv` (so results survive
      even if MLflow logging fails, which it has before!).
    - Append each finished run name to `model/completed_runs.txt`.
-
 3. Inspect results either in `evaluation/{COUNTRY}_results.csv` or in the MLflow UI:
 
    ```
@@ -173,4 +169,3 @@ This should only be used to find the best parameter selection and test the diffe
 To re-run a config from scratch, delete its entry from `model/completed_runs.txt`
 (and, if you want completely fresh data, set `FORCE_DOWNLOAD = True` in
 `utils/constants.py`).
-
