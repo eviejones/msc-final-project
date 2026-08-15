@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
@@ -43,7 +44,9 @@ def read_rainfall() -> pd.DataFrame:
 
 
 def process_rainfall(
-    df_rainfall: pd.DataFrame, all_regions, all_months
+    df_rainfall: pd.DataFrame,
+    all_regions: np.ndarray | None,
+    all_months: pd.PeriodIndex | None,
 ) -> pd.DataFrame:
     """Processes the raw rainfall dataset to calculate monthly regional anomalies.
 
@@ -54,8 +57,10 @@ def process_rainfall(
 
     Args:
         df_rainfall (pd.DataFrame): The raw rainfall DataFrame returned by `read_rainfall`.
-        all_regions: Array of unique regions for the Cartesian spine.
-        all_months: Array of target months for the Cartesian spine.
+        all_regions (np.ndarray | None): Array of unique regions for the
+            Cartesian spine. If None, derived from `df_rainfall`.
+        all_months (pd.PeriodIndex | None): Array of target months for the
+            Cartesian spine. If None, derived from `df_rainfall`.
 
     Returns:
         pd.DataFrame: A processed DataFrame indexed by region and year_month,
@@ -95,8 +100,8 @@ def process_rainfall(
 
 
 def get_clean_data(
-    all_regions=None,
-    all_months=None,
+    all_regions: np.ndarray | None = None,
+    all_months: pd.PeriodIndex | None = None,
 ) -> tuple[pd.DataFrame, list[str]]:
     """Orchestrates the reading and processing of rainfall data.
 
@@ -105,8 +110,10 @@ def get_clean_data(
     of predictor column names for downstream modelling.
 
     Args:
-        all_regions: Array of unique regions full index.
-        all_months: Array of target months for the full index.
+        all_regions (np.ndarray | None, optional): Array of unique regions
+            for the full index. Defaults to None.
+        all_months (pd.PeriodIndex | None, optional): Array of target months
+            for the full index. Defaults to None.
 
     Returns:
         tuple[pd.DataFrame, list[str]]: A tuple containing:

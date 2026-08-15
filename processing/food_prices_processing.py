@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from ingest.hdx_client import HdxClient
@@ -12,13 +13,13 @@ logger = get_logger("WFP Processing")
 def read_food_prices() -> pd.DataFrame:
     """Fetches, filters, and cleans World Food Programme (WFP) food price data for the selected country from the HDX platform.
 
-    This function retrieves raw CSV data, optionally includes the Abyei region from
-    the South Sudan dataset, and filters for primary commodities (from constants) sold at retail prices. It standardizes dates, admin regions, and
-    calculates a unified USD price per kilogram.
+    This function retrieves raw CSV data and filters for primary commodities
+    (from constants) sold at retail prices. It standardises dates, admin
+    regions, and calculates a unified USD price per kilogram.
 
     Returns:
         pd.DataFrame: A cleaned DataFrame containing historical retail prices for
-            specific commodities, with standardized state names, temporal periods,
+            specific commodities, with standardised state names, temporal periods,
             and calculated 'usdprice_per_kg'.
     """
     hdx = HdxClient()
@@ -61,7 +62,9 @@ def read_food_prices() -> pd.DataFrame:
 
 
 def process_and_pivot_food_prices(
-    df_prices: pd.DataFrame, all_regions, all_months
+    df_prices: pd.DataFrame,
+    all_regions: np.ndarray | None,
+    all_months: pd.PeriodIndex | None,
 ) -> pd.DataFrame:
     """Aggregates and pivots food price data to create time-series features.
 
@@ -73,8 +76,10 @@ def process_and_pivot_food_prices(
 
     Args:
         df_prices (pd.DataFrame): The cleaned food prices DataFrame.
-        all_regions: Array-like of all unique regions for the Cartesian spine.
-        all_months: Array-like of all target months for the Cartesian spine.
+        all_regions (np.ndarray | None): Array of all unique regions for the
+            Cartesian spine. If None, derived from `df_prices`.
+        all_months (pd.PeriodIndex | None): Array of all target months for the
+            Cartesian spine. If None, derived from `df_prices`.
 
     Returns:
         pd.DataFrame: A continuous time-series DataFrame indexed by region
@@ -133,9 +138,9 @@ def process_and_pivot_food_prices(
 
 
 def get_clean_data(
-    all_regions=None,
-    all_months=None,
-):
+    all_regions: np.ndarray | None = None,
+    all_months: pd.PeriodIndex | None = None,
+) -> tuple[pd.DataFrame, list[str]]:
     """An orchestrator function that runs the full food price data pipeline.
 
     This function calls the read and process functions in sequence, and extracts
@@ -144,11 +149,13 @@ def get_clean_data(
     sparsity-aware split finding.
 
     Args:
-        all_regions (array-like, optional): Array of all unique regions for the Cartesian spine.
-        all_months (array-like, optional): Array of all target months for the Cartesian spine.
+        all_regions (np.ndarray | None, optional): Array of all unique regions
+            for the Cartesian spine. Defaults to None.
+        all_months (pd.PeriodIndex | None, optional): Array of all target
+            months for the Cartesian spine. Defaults to None.
 
     Returns:
-        tuple: A tuple containing:
+        tuple[pd.DataFrame, list[str]]: A tuple containing:
             - pd.DataFrame: The final machine-learning-ready dataset.
             - list[str]: A list of column names identifying the predictor
                 variables (the lagged price features).

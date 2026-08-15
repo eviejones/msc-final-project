@@ -16,14 +16,14 @@ def create_regional_monthly_baseline(df: pd.DataFrame, k: float) -> pd.DataFrame
     1. Groups data by region and month, counting conflict events
     2. Expands data to include all regions and months
     3. Creates six monthly rolling average and standard deviation
-    4. Adds a mew column that indicates whether there was an escalation k deviations about the mean.
+    4. Adds a new column that indicates whether there was an escalation k deviations above the mean.
 
     Args:
-        df (pd.DataFrame): Full ACLED dataframe including six months build up
+        df (pd.DataFrame): Full ACLED dataframe including six months build up.
         k (float): The number of standard deviations above the mean for it to be considered an escalation in conflict.
 
     Returns:
-        pd.DataFrame: Grouped regional dataframe, with conflict escalation marked (Y)
+        pd.DataFrame: Grouped regional dataframe, with conflict escalation marked as 1 (escalation) or 0 (no escalation).
     """
     df = df.copy()
 
@@ -84,7 +84,7 @@ def pre_process_data(
     3. Creates list of columns used for prediction.
 
     Args:
-        df (pd.DataFrames): Full data from ACLED.
+        df (pd.DataFrame): Full data from ACLED.
         k (float): The number of standard deviations above the mean for it to be considered an escalation in conflict.
         event_col (str): The event column to group on, either sub_event_type or event_type.
     Returns:
@@ -151,12 +151,19 @@ def pre_process_data(
     return combined_df, predictor_cols
 
 
-def get_clean_data(k: float = 0.5, event_col: str = "event_type"):
+def get_clean_data(
+    k: float = 0.5, event_col: str = "event_type"
+) -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
     """Gets the clean ACLED event data, both raw and processed with target variables.
 
     Args:
         k (float): The number of standard deviations above the mean to mark as an escalation. Defaults to 0.5.
         event_col (str): The event column to group on, either sub_event_type or event_type. Defaults to "event_type".
+
+    Returns:
+        pd.DataFrame: The data ready for passing to the model.
+        list[str]: List of columns used for prediction.
+        pd.DataFrame: The full, unprocessed data from ACLED.
     """
 
     acled = AcledClient()

@@ -111,7 +111,7 @@ def get_embedding(
         model (PreTrainedModel): The pre-trained language model.
 
     Returns:
-        List[float]: A list of floats representing the mean-pooled embedding vector.
+        list[float]: A list of floats representing the mean-pooled embedding vector.
     """
     inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
     with torch.no_grad():
@@ -174,7 +174,19 @@ def get_monthly_regional_embeddings(
     model: PreTrainedModel,
     batch_size: int = 64,  # Bumped to 64 for your M5 Max!
 ) -> pd.DataFrame:
-    """Calculates document embeddings in batches and aggregates them by region ('admin1') and month."""
+    """Calculates document embeddings in batches and aggregates them by region ('admin1') and month.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing 'notes_cleaned', 'admin1', and
+            'year_month' columns, restricted to the padded warm-up window.
+        tokenizer (PreTrainedTokenizer): The tokenizer matching the model.
+        model (PreTrainedModel): The pre-trained language model.
+        batch_size (int, optional): Number of notes to embed per batch. Defaults to 64.
+
+    Returns:
+        pd.DataFrame: A DataFrame with one row per region and month, containing
+            the mean-pooled embedding columns ('emb_0', 'emb_1', ...).
+    """
     padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
 
     df = df.copy()
@@ -258,12 +270,12 @@ def apply_pca_train_only(
         train_df (pd.DataFrame): Training dataset containing embedding columns.
         onset_df (pd.DataFrame): Onset dataset containing embedding columns.
         active_df (pd.DataFrame): Active dataset containing embedding columns.
-        predictor_cols (List[str]): List of all predictor column names.
+        predictor_cols (list[str]): List of all predictor column names.
         variance_threshold (float, optional): The target cumulative variance
             to retain. Defaults to 0.90.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, List[str]]:
+        tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, PCA, list[str]]:
             A tuple containing:
             - The transformed train DataFrame.
             - The transformed onset DataFrame.
@@ -303,14 +315,22 @@ def apply_pca_train_only(
     return X_train, X_onset, X_active, pca, final_predictor_cols
 
 
-def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
+def full_dataset(
+    df: pd.DataFrame,
+    all_regions: np.ndarray | None,
+    all_months: pd.PeriodIndex | None,
+) -> pd.DataFrame:
     """
     Creates a balanced panel dataset for all regions and months, imputes missing
-    values with global means, and lags embeddings by one month.
+    embedding values with zero, and lags embeddings by one month.
 
     Args:
         df (pd.DataFrame): The input DataFrame containing 'region', 'year_month',
             and embedding features.
+        all_regions (np.ndarray | None): Array of all unique regions for the
+            Cartesian spine. If None, derived from `df`.
+        all_months (pd.PeriodIndex | None): Array of all target months for the
+            Cartesian spine. If None, derived from `df`.
 
     Returns:
         pd.DataFrame: A fully balanced panel DataFrame with lagged embedding features.
@@ -359,8 +379,8 @@ def full_dataset(df: pd.DataFrame, all_regions, all_months) -> pd.DataFrame:
 
 def get_clean_data(
     df: pd.DataFrame | None = None,
-    all_regions=None,
-    all_months=None,
+    all_regions: np.ndarray | None = None,
+    all_months: pd.PeriodIndex | None = None,
     conflict_only: bool = False,
 ) -> tuple[pd.DataFrame, list[str]]:
     """
@@ -372,9 +392,13 @@ def get_clean_data(
     embeddings are recalculated from scratch using ConfliBERT.
 
     Args:
-        df (Optional[pd.DataFrame], optional): The raw DataFrame. Required if
+        df (pd.DataFrame | None, optional): The raw DataFrame. Required if
             embeddings need to be calculated (no cached file, or FORCE_DOWNLOAD is True).
             Defaults to None.
+        all_regions (np.ndarray | None, optional): Array of all unique regions
+            for the Cartesian spine. Defaults to None.
+        all_months (pd.PeriodIndex | None, optional): Array of all target
+            months for the Cartesian spine. Defaults to None.
         conflict_only (bool, optional): If True, embeddings are computed only from
             events where 'conflict' == 1 (battles, violence against civilians,
             explosions/remote violence, riots), excluding non-conflict events such
@@ -384,7 +408,7 @@ def get_clean_data(
             Defaults to False.
 
     Returns:
-        Tuple[pd.DataFrame, List[str]]: A tuple containing the final processed
+        tuple[pd.DataFrame, list[str]]: A tuple containing the final processed
             DataFrame and a list of predictor column names.
     """
     embeddings_path = (
