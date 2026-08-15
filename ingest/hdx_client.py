@@ -26,7 +26,25 @@ class HdxClient:
         name = re.sub(r"[\s_-]+", "_", file_name.lower().strip())
         return f"hdx_{name}"
 
-    def get_admin_boundaries(self, dataset_name, file_name, file_type):
+    def get_admin_boundaries(
+        self, dataset_name: str, file_name: str, file_type: str
+    ) -> gpd.GeoDataFrame | None:
+        """Fetches, caches, and reads administrative boundary data from HDX.
+
+        Reads the boundary file from a local cache if it already exists (unless
+        FORCE_DOWNLOAD is set), otherwise downloads it from HDX, extracts it if
+        it is a zip archive, and saves it to the local cache before reading it.
+
+        Args:
+            dataset_name (str): The HDX dataset identifier to fetch from.
+            file_name (str): The name of the resource file to look for within
+                the dataset.
+            file_type (str): The file extension/format to match (e.g. "shp").
+
+        Returns:
+            gpd.GeoDataFrame | None: The admin boundaries as a GeoDataFrame, or
+                None if the dataset or a matching resource could not be found.
+        """
         download_dir = "data/hdx/admin_boundaries"
         formatted_name = self._format_file_name(file_name)
         file_path = os.path.join(download_dir, f"{formatted_name}.{file_type}")
@@ -87,7 +105,25 @@ class HdxClient:
 
         return gpd.read_file(file_path)
 
-    def get_data(self, dataset_name, file_name, file_type):
+    def get_data(
+        self, dataset_name: str, file_name: str, file_type: str
+    ) -> pd.DataFrame | None:
+        """Fetches, caches, and reads tabular data from HDX.
+
+        Reads the file from a local cache if it already exists (unless
+        FORCE_DOWNLOAD is set), otherwise downloads it from HDX and saves it
+        to the local cache before reading it.
+
+        Args:
+            dataset_name (str): The HDX dataset identifier to fetch from.
+            file_name (str): The name of the resource file, used to build the
+                cached file name.
+            file_type (str): The file extension/format to match (e.g. "csv").
+
+        Returns:
+            pd.DataFrame | None: The fetched data, or None if the dataset or a
+                matching resource could not be found.
+        """
         download_dir = "data/hdx"
         file_name = self._format_file_name(file_name)
         file_path = os.path.join(download_dir, f"{file_name}.{file_type}")
@@ -109,7 +145,7 @@ class HdxClient:
 
         if target_resource:
             os.makedirs(download_dir, exist_ok=True)
-            if os.path.exists(file_path):  # Delete existing file if forcee_download
+            if os.path.exists(file_path):  # Delete existing file if force_download
                 os.remove(file_path)
             _, path = target_resource.download(folder=download_dir)
             logger.info(f"Downloaded file to: {path}")

@@ -55,7 +55,9 @@ class AcledClient:
             f"Failed to get access token: {response.status_code} {response.text}"
         )
 
-    def _validate_dates(self, start_date, end_date) -> None:
+    def _validate_dates(
+        self, start_date: str | pd.Timestamp, end_date: str | pd.Timestamp
+    ) -> None:
         """Validates that dates are parseable (str in YYYY-MM-DD or pd.Timestamp) and logically ordered."""
         try:
             start = pd.to_datetime(start_date)
@@ -94,7 +96,7 @@ class AcledClient:
             params["event_type"] = ":OR:event_type=".join(self.event_types)
         return params
 
-    def _save_data(self, df: pd.DataFrame):
+    def _save_data(self, df: pd.DataFrame) -> None:
         """Saves the fetched data to a csv file."""
         country_str = self.country.lower().replace(" ", "_")
         filename = f"acled_{country_str}.csv"
@@ -181,8 +183,8 @@ class AcledClient:
         start_date: str | pd.Timestamp,
         end_date: str | pd.Timestamp,
         *,
-        event_types=None,
-    ):
+        event_types: list[str] | str | None = None,
+    ) -> pd.DataFrame:
         """Gets data for a specified country and dates from the ACLED API.
 
         Args:
@@ -191,7 +193,9 @@ class AcledClient:
                 YYYY-MM-DD string or a pd.Timestamp.
             end_date (str | pd.Timestamp): End date for pulling data. Accepts a
                 YYYY-MM-DD string or a pd.Timestamp.
-            event_types (list[str]): List of event types to pull data from. Event types must match ACLED event types.
+            event_types (list[str] | str | None, optional): Event type(s) to pull
+                data from, either a single event type or a list of them. Event
+                types must match ACLED event types. Defaults to None.
         Returns:
             pd.DataFrame: Dataframe containing all data from the ACLED API.
         """
