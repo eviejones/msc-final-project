@@ -1,7 +1,6 @@
 .env
 .venv
 .idea
-data
 model/mlruns
 model/mlflow.db
 mlruns
