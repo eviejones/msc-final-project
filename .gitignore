@@ -4,6 +4,8 @@
 data
 model/mlruns
 model/mlflow.db
+mlruns
+mlflow.db
 ingest/chirps_cache
 archive
 __pycache__
