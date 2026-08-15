@@ -1,23 +1,66 @@
+import difflib
+
+import pandas as pd
 import pycountry
 
 from ingest.hdx_client import HdxClient
+from utils.constants import COUNTRY
 from utils.logger import get_logger
 
 logger = get_logger("Name Mapping")
 
-SUDAN_STATE_MAPPING = {
-    "Al Gezira": "Al Jazirah",
-    "Nile": "River Nile",
-    "Eastern Darfur": "East Darfur",
-    "Abyei PCA": "Abyei",
-    "Aj Jazirah": "Al Jazirah",
+FUZZY_MATCH_CUTOFF = 0.8
+
+# As Sudan has been the focus of this project, the region name differences have been mnaully added. For other countries, fuzzy matching has been included
+STATE_NAME_OVERRIDES = {
+    "Sudan": {
+        "Al Gezira": "Al Jazirah",
+        "Nile": "River Nile",
+        "Eastern Darfur": "East Darfur",
+        "Abyei PCA": "Abyei",
+        "Aj Jazirah": "Al Jazirah",
+    },
 }
 
 
-def clean_state_names(value):
-    return SUDAN_STATE_MAPPING.get(
-        value, value
-    )  # TODO make this work for other countries
+def clean_state_names(value: str, canonical_names=None) -> str:
+    """
+    Maps a raw admin1 name to its canonical form for the current COUNTRY.
+
+    Checks the manual override table for COUNTRY first. If there's no override and a list of
+    canonical names is supplied, falls back to fuzzy string matching against it.
+    """
+    if pd.isna(value):
+        return value
+
+    overrides = STATE_NAME_OVERRIDES.get(COUNTRY, {})
+    if value in overrides:
+        mapped = overrides[value]
+        logger.info(f"Renamed region '{value}' to '{mapped}' (manual override)")
+        return mapped
+
+    if canonical_names is None or value in canonical_names:
+        return value
+
+    close_matches = difflib.get_close_matches(
+        value, canonical_names, n=1, cutoff=FUZZY_MATCH_CUTOFF
+    )
+    if close_matches:
+        mapped = close_matches[0]
+        logger.info(f"Renamed region '{value}' to '{mapped}' (fuzzy match)")
+        return mapped
+
+    logger.warning(f"No mapping found for region '{value}'; leaving unchanged")
+    return value
+
+
+def build_state_name_map(values, canonical_names=None) -> dict:
+    """Resolves each distinct raw region name once, so renames are logged once."""
+    return {
+        value: clean_state_names(value, canonical_names)
+        for value in pd.unique(values)
+        if pd.notna(value)
+    }
 
 
 def get_iso3(country: str) -> str:

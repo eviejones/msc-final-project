@@ -81,10 +81,12 @@ date windows the pipelines run against:
   text embeddings) instead of reading local caches. This should be set to `False` unless you want to delete and redownload everything. 
 
 The file includes a commented-out Ethiopia configuration as an example of switching
-countries. When switching `COUNTRY`, note that region name cleanup in
-[`utils/name_mapping.py`](utils/name_mapping.py) (`SUDAN_STATE_MAPPING`) is currently
-hard-coded for Sudan's admin1 names - a new country may need its own mapping added
-there if the HDX and ACLED region names don't already match. #TODO sort thins
+countries. When switching `COUNTRY`, region name cleanup in
+[`utils/name_mapping.py`](utils/name_mapping.py) fuzzy-matches WFP/HDX admin1 names
+against the canonical ACLED region names, so most countries need no extra work. If a
+region name differs too much for fuzzy matching to resolve (e.g. an outright rename),
+add an entry for the country to `STATE_NAME_OVERRIDES` in that file - any override or
+fuzzy match applied is logged so mismatches can be reviewed.
 
 ## Model architecture
 
