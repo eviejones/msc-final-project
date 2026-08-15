@@ -86,7 +86,7 @@ def train_evaluate_model(
 
     The dataset is split into training, onset, and active sets based on predefined date ranges.
     It evaluates models using time-series cross-validation on the training set to find the
-    optimal classification threshold (maximizing the F1 score). It then applies this threshold
+    optimal classification threshold (maximising the F1 score). It then applies this threshold
     to the onset and active test sets and returns detailed classification metrics.
 
     Args:
@@ -272,7 +272,7 @@ def train_evaluate_model(
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
     # optimal_threshold = thresholds[np.argmax(f1_scores)]
 
-    max_f1 = f1_scores.max()
+    max_f1 = f1_scores.max() # Ref: https://stackoverflow.com/questions/57060907/compute-maximum-f1-score-using-precision-recall-curve
     tied_indices = np.flatnonzero(f1_scores == max_f1)
     optimal_threshold = thresholds[tied_indices[-1]]
 

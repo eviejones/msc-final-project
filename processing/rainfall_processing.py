@@ -5,16 +5,21 @@ from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY, TRAIN_START_DATE
 from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
-from utils.name_mapping import clean_state_names, get_iso3, pcode_mapping
+from utils.name_mapping import build_state_name_map, get_iso3, pcode_mapping
 
 logger = get_logger("Rainfall Processing")
 
 
-def read_rainfall() -> pd.DataFrame:
+def read_rainfall(all_regions: np.ndarray | None = None) -> pd.DataFrame:
     """Reads and standardises subnational rainfall data from the HDX client.
 
     This function retrieves the rainfall dataset, filters it to administrative
     level 1, and maps PCODEs to clean region names.
+
+    Args:
+        all_regions (np.ndarray | None, optional): Canonical region names
+            (e.g. from the ACLED baseline) to fuzzy-match rainfall region
+            names against. Defaults to None.
 
     Returns:
         pd.DataFrame: A formatted DataFrame containing the combined rainfall data
@@ -31,9 +36,9 @@ def read_rainfall() -> pd.DataFrame:
         file_type="csv",
     )
     rainfall_admin1 = rainfall[rainfall["adm_level"] == 1].copy()
-    rainfall_admin1["region"] = (
-        rainfall_admin1["PCODE"].map(pcodes).apply(clean_state_names)
-    )
+    mapped_regions = rainfall_admin1["PCODE"].map(pcodes)
+    name_map = build_state_name_map(mapped_regions, all_regions)
+    rainfall_admin1["region"] = mapped_regions.map(name_map)
     logger.info("Rainfall PCODEs mapped to regions.")
 
     rainfall_filtered = rainfall_admin1.dropna(subset=["region"])
@@ -120,7 +125,7 @@ def get_clean_data(
             - The final, cleaned, and processed DataFrame.
             - A list of predictor column names (e.g., ["rainfall_3m_anomaly"]).
     """
-    rainfall_df = read_rainfall()
+    rainfall_df = read_rainfall(all_regions)
     processed_df = process_rainfall(rainfall_df, all_regions, all_months)
     processed_df["rainfall_3m_anomaly"] = processed_df["rainfall_3m_anomaly"]
 

@@ -5,17 +5,22 @@ from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY, PRIMARY_COMMODITIES, TRAIN_START_DATE
 from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
-from utils.name_mapping import clean_state_names
+from utils.name_mapping import build_state_name_map
 
 logger = get_logger("WFP Processing")
 
 
-def read_food_prices() -> pd.DataFrame:
+def read_food_prices(all_regions: np.ndarray | None = None) -> pd.DataFrame:
     """Fetches, filters, and cleans World Food Programme (WFP) food price data for the selected country from the HDX platform.
 
     This function retrieves raw CSV data and filters for primary commodities
     (from constants) sold at retail prices. It standardises dates, admin
     regions, and calculates a unified USD price per kilogram.
+
+    Args:
+        all_regions (np.ndarray | None, optional): Canonical region names
+            (e.g. from the ACLED baseline) to fuzzy-match WFP region names
+            against. Defaults to None.
 
     Returns:
         pd.DataFrame: A cleaned DataFrame containing historical retail prices for
@@ -43,7 +48,8 @@ def read_food_prices() -> pd.DataFrame:
     ].copy()
 
     renamed_df = df_filtered_cols.copy()
-    renamed_df["admin1"] = df_filtered_cols["admin1"].apply(clean_state_names)
+    name_map = build_state_name_map(df_filtered_cols["admin1"], all_regions)
+    renamed_df["admin1"] = df_filtered_cols["admin1"].map(name_map)
     renamed_df["date"] = pd.to_datetime(renamed_df["date"])
     renamed_df["year_month"] = renamed_df["date"].dt.to_period("M")
     renamed_df["unit_weight_in_kg"] = (
@@ -160,7 +166,7 @@ def get_clean_data(
             - list[str]: A list of column names identifying the predictor
                 variables (the lagged price features).
     """
-    food_prices_df = read_food_prices()
+    food_prices_df = read_food_prices(all_regions)
     pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
 
     predictor_cols = [
