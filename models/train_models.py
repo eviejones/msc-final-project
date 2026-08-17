@@ -272,7 +272,7 @@ def train_evaluate_model(
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
     # optimal_threshold = thresholds[np.argmax(f1_scores)]
 
-    max_f1 = f1_scores.max() # Ref: https://stackoverflow.com/questions/57060907/compute-maximum-f1-score-using-precision-recall-curve
+    max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907/compute-maximum-f1-score-using-precision-recall-curve
     tied_indices = np.flatnonzero(f1_scores == max_f1)
     optimal_threshold = thresholds[tied_indices[-1]]
 

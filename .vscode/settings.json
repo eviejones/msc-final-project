@@ -24,7 +24,7 @@
     },
     "search.exclude": {
         "**/__pycache__": true,
-        "model/mlruns": true,
+        "models/mlruns": true,
         "archive": true,
         "ingest/chirps_cache": true
     }
