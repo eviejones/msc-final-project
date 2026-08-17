@@ -1,12 +1,13 @@
 .env
 .venv
 .idea
-model/mlruns
-model/mlflow.db
+models/mlruns
+models/mlflow.db
 mlruns
 mlflow.db
 ingest/chirps_cache
 archive
+data
 __pycache__
 mlruns_old_broken
 .DS_Store

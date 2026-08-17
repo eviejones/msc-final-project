@@ -54,13 +54,13 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5000
 - **MLFLOW_TRACKING_URI** - only required for logging model runs in `run_test_models.ipynb`.
   Not needed for `run_best_model.ipynb`, which doesn't log to MLflow.
 
-Note: raw and cached data (`data/`), the MLflow store (`model/mlflow.db`, `model/mlruns`)
+Note: raw and cached data (`data/`), the MLflow store (`models/mlflow.db`, `models/mlruns`)
 and other derived artifacts are also git-ignored, so a fresh checkout will fetch and
 cache data from ACLED/HDX/Hugging Face the first time each pipeline runs.
 
 ## Running the pipelines
 
-Both pipelines are run Jupyter notebooks in [`model/`](model/) and should be run with the
+Both pipelines are run Jupyter notebooks in [`models/`](models/) and should be run with the
 project root as the working directory (e.g. `jupyter lab` from the repo root, or via
 VS Code's notebook UI with the `.venv` kernel selected).
 
@@ -109,7 +109,7 @@ region exceed `k` standard deviations above its rolling mean the following month
   out-of-fold training predictions, then applied to both test windows.
 - **Hyperparameter search** - `RandomizedSearchCV` over an XGBoost parameter grid,
   scored on average precision, orchestrated by
-  [`model/train_models.py`](model/train_models.py)'s `train_evaluate_model`.
+  [`models/train_models.py`](models/train_models.py)'s `train_evaluate_model`.
 
 ### `run_best_model.ipynb` - evaluate the winning configuration(s) #TODO
 
@@ -151,7 +151,7 @@ This should only be used to find the best parameter selection and test the diffe
    ```
 2. Run the notebook cells in order. It will:
 
-   - Load `model/completed_runs.txt` to skip configs that have already finished
+   - Load `models/completed_runs.txt` to skip configs that have already finished
      (safe to stop and resume).
    - Fetch/cache the ACLED, food, rain and text data needed for each feature
      combination via `get_clean_combined_data`.
@@ -159,13 +159,13 @@ This should only be used to find the best parameter selection and test the diffe
      (i.e. it performs the `RandomizedSearchCV`), log params/metrics to MLflow, and
      append a backup row to `evaluation/{COUNTRY}_results.csv` (so results survive
      even if MLflow logging fails, which it has before!).
-   - Append each finished run name to `model/completed_runs.txt`.
+   - Append each finished run name to `models/completed_runs.txt`.
 3. Inspect results either in `evaluation/{COUNTRY}_results.csv` or in the MLflow UI:
 
    ```
    mlflow ui --backend-store-uri sqlite:///mlflow.db --host 127.0.0.1 --port 5000
    ```
 
-To re-run a config from scratch, delete its entry from `model/completed_runs.txt`
+To re-run a config from scratch, delete its entry from `models/completed_runs.txt`
 (and, if you want completely fresh data, set `FORCE_DOWNLOAD = True` in
 `utils/constants.py`).
