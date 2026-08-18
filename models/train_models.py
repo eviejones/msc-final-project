@@ -19,6 +19,7 @@ from utils.constants import (
     ONSET_START_DATE,
     TRAIN_END_DATE,
     TRAIN_START_DATE,
+    THRESHOLD_FIX_APPLIED
 )
 from utils.cross_validation import (
     grouped_timeseries_cv_ids,
@@ -270,11 +271,13 @@ def train_evaluate_model(
     # ---- Optimisation
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
-    # optimal_threshold = thresholds[np.argmax(f1_scores)]
-
-    max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907/compute-maximum-f1-score-using-precision-recall-curve
-    tied_indices = np.flatnonzero(f1_scores == max_f1)
-    optimal_threshold = thresholds[tied_indices[-1]]
+    
+    if THRESHOLD_FIX_APPLIED:
+        max_f1 = f1_scores.max()   # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
+        tied_indices = np.flatnonzero(f1_scores == max_f1)
+        optimal_threshold = thresholds[tied_indices[-1]]
+    else:      
+        optimal_threshold = thresholds[np.argmax(f1_scores)] # Old incorrect threshold now just used for comparison
 
     # Evaluate on onset test set
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
