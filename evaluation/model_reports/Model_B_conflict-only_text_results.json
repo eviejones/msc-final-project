@@ -1,6 +1,8 @@
 {
   "optimal_threshold": "0.4370",
   "n_predictors": 56,
+  "train_cv_aupr": "0.2126",
+  "train_cv_f1": "0.3130",
   "onset_aupr": "0.3941",
   "onset_precision_class1": "0.3158",
   "onset_recall_class1": "0.3673",
