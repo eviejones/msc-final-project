@@ -1,6 +1,5 @@
 import pandas as pd
 
-THRESHOLD_FIX_APPLIED = True
 
 COUNTRY = "Sudan"  # Country to collect data for
 
