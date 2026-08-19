@@ -19,7 +19,6 @@ from utils.constants import (
     ONSET_START_DATE,
     TRAIN_END_DATE,
     TRAIN_START_DATE,
-    THRESHOLD_FIX_APPLIED
 )
 from utils.cross_validation import (
     grouped_timeseries_cv_ids,
@@ -81,6 +80,7 @@ def train_evaluate_model(
     compute_shap: bool = False,
     shap_sample_size: int | None = 2000,
     return_onset_predictions: bool = False,
+    threshold_fix: bool = True
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
@@ -272,7 +272,7 @@ def train_evaluate_model(
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
     
-    if THRESHOLD_FIX_APPLIED:
+    if threshold_fix:
         max_f1 = f1_scores.max()   # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
         tied_indices = np.flatnonzero(f1_scores == max_f1)
         optimal_threshold = thresholds[tied_indices[-1]]

@@ -1,12 +1,12 @@
 {
-  "optimal_threshold": "0.3553",
-  "n_predictors": 82,
-  "onset_aupr": "0.3019",
-  "onset_precision_class1": "0.2335",
-  "onset_recall_class1": "0.7959",
-  "onset_f1_class1": "0.3611",
-  "active_aupr": "0.1928",
-  "active_precision_class1": "0.1392",
-  "active_recall_class1": "0.9310",
-  "active_f1_class1": "0.2422"
+  "optimal_threshold": "0.4151",
+  "n_predictors": 782,
+  "onset_aupr": "0.3624",
+  "onset_precision_class1": "0.3010",
+  "onset_recall_class1": "0.6327",
+  "onset_f1_class1": "0.4079",
+  "active_aupr": "0.1733",
+  "active_precision_class1": "0.1436",
+  "active_recall_class1": "0.4655",
+  "active_f1_class1": "0.2195"
 }
