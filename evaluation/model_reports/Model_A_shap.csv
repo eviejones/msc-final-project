@@ -1,31 +1,91 @@
-feature,mean_abs_shap
-rolling_mean_6m,0.21932676
-rolling_std_6m,0.098186016
-armed_clash,0.05140887
-price_millet,0.050922927
-rainfall_3m_anomaly,0.049732823
-attack,0.046501387
-price_sorghum,0.039835252
-price_wheat_flour,0.022563497
-looting_property_destruction,0.01996196
-excessive_force_against_protesters,0.015096759
-fatalities,0.014777318
-peaceful_protest,0.01376559
-change_to_group_activity,0.00340108
-protest_with_intervention,0.0019898796
-mob_violence,0.0011826786
-sexual_violence,0.0007935129
-arrests,0.00064048124
-shelling_artillery_missile_attack,0.00027464028
-violent_demonstration,0.00015893325
-government_regains_territory,0.00015696199
-other,0.00011783089
-abduction_forced_disappearance,0.0
-remote_explosive_landmine_ied,0.0
-non_violent_transfer_of_territory,0.0
-agreement,0.0
-headquarters_or_base_established,0.0
-grenade,0.0
-disrupted_weapons_use,0.0
-chemical_weapon,0.0
-air_drone_strike,0.0
+feature,mean_abs_shap,dataset,category
+rolling_mean_6m,0.21932676,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.098186016,train,Structural Baseline (Rolling Stats)
+armed_clash,0.05140887,train,Tabular ACLED Counts
+price_millet,0.050922927,train,Food Prices
+rainfall_3m_anomaly,0.049732823,train,Rainfall
+attack,0.046501387,train,Tabular ACLED Counts
+price_sorghum,0.039835252,train,Food Prices
+price_wheat_flour,0.022563497,train,Food Prices
+looting_property_destruction,0.01996196,train,Tabular ACLED Counts
+excessive_force_against_protesters,0.015096759,train,Tabular ACLED Counts
+fatalities,0.014777318,train,Tabular ACLED Counts
+peaceful_protest,0.01376559,train,Tabular ACLED Counts
+change_to_group_activity,0.00340108,train,Tabular ACLED Counts
+protest_with_intervention,0.0019898796,train,Tabular ACLED Counts
+mob_violence,0.0011826786,train,Tabular ACLED Counts
+sexual_violence,0.0007935129,train,Tabular ACLED Counts
+arrests,0.00064048124,train,Tabular ACLED Counts
+shelling_artillery_missile_attack,0.00027464028,train,Tabular ACLED Counts
+violent_demonstration,0.00015893325,train,Tabular ACLED Counts
+government_regains_territory,0.00015696199,train,Tabular ACLED Counts
+other,0.00011783089,train,Tabular ACLED Counts
+abduction_forced_disappearance,0.0,train,Tabular ACLED Counts
+remote_explosive_landmine_ied,0.0,train,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,train,Tabular ACLED Counts
+agreement,0.0,train,Tabular ACLED Counts
+headquarters_or_base_established,0.0,train,Tabular ACLED Counts
+grenade,0.0,train,Tabular ACLED Counts
+disrupted_weapons_use,0.0,train,Tabular ACLED Counts
+chemical_weapon,0.0,train,Tabular ACLED Counts
+air_drone_strike,0.0,train,Tabular ACLED Counts
+rolling_mean_6m,0.20755808,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.1650386,onset,Structural Baseline (Rolling Stats)
+armed_clash,0.056676872,onset,Tabular ACLED Counts
+attack,0.046039004,onset,Tabular ACLED Counts
+rainfall_3m_anomaly,0.044678245,onset,Rainfall
+price_millet,0.04023299,onset,Food Prices
+looting_property_destruction,0.037648894,onset,Tabular ACLED Counts
+price_wheat_flour,0.027468743,onset,Food Prices
+price_sorghum,0.025160389,onset,Food Prices
+change_to_group_activity,0.017624952,onset,Tabular ACLED Counts
+fatalities,0.015437716,onset,Tabular ACLED Counts
+peaceful_protest,0.012510244,onset,Tabular ACLED Counts
+excessive_force_against_protesters,0.007737916,onset,Tabular ACLED Counts
+sexual_violence,0.0016208069,onset,Tabular ACLED Counts
+protest_with_intervention,0.0013954728,onset,Tabular ACLED Counts
+shelling_artillery_missile_attack,0.0012115212,onset,Tabular ACLED Counts
+arrests,0.0011500635,onset,Tabular ACLED Counts
+mob_violence,0.0010874984,onset,Tabular ACLED Counts
+government_regains_territory,0.0003734589,onset,Tabular ACLED Counts
+violent_demonstration,5.8865833e-05,onset,Tabular ACLED Counts
+other,5.3928266e-05,onset,Tabular ACLED Counts
+abduction_forced_disappearance,0.0,onset,Tabular ACLED Counts
+remote_explosive_landmine_ied,0.0,onset,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,onset,Tabular ACLED Counts
+agreement,0.0,onset,Tabular ACLED Counts
+headquarters_or_base_established,0.0,onset,Tabular ACLED Counts
+grenade,0.0,onset,Tabular ACLED Counts
+disrupted_weapons_use,0.0,onset,Tabular ACLED Counts
+chemical_weapon,0.0,onset,Tabular ACLED Counts
+air_drone_strike,0.0,onset,Tabular ACLED Counts
+rolling_std_6m,0.22011577,active,Structural Baseline (Rolling Stats)
+rolling_mean_6m,0.20050584,active,Structural Baseline (Rolling Stats)
+rainfall_3m_anomaly,0.050929073,active,Rainfall
+armed_clash,0.04909962,active,Tabular ACLED Counts
+attack,0.041331407,active,Tabular ACLED Counts
+looting_property_destruction,0.037403084,active,Tabular ACLED Counts
+price_millet,0.026253683,active,Food Prices
+change_to_group_activity,0.024253914,active,Tabular ACLED Counts
+price_wheat_flour,0.022870949,active,Food Prices
+price_sorghum,0.017709566,active,Food Prices
+fatalities,0.011771884,active,Tabular ACLED Counts
+peaceful_protest,0.008820076,active,Tabular ACLED Counts
+excessive_force_against_protesters,0.0034399377,active,Tabular ACLED Counts
+shelling_artillery_missile_attack,0.0023905444,active,Tabular ACLED Counts
+sexual_violence,0.0016775429,active,Tabular ACLED Counts
+government_regains_territory,0.00093297294,active,Tabular ACLED Counts
+violent_demonstration,0.00090690056,active,Tabular ACLED Counts
+protest_with_intervention,0.0008823882,active,Tabular ACLED Counts
+arrests,0.00082240975,active,Tabular ACLED Counts
+mob_violence,0.0006271933,active,Tabular ACLED Counts
+other,6.647246e-05,active,Tabular ACLED Counts
+abduction_forced_disappearance,0.0,active,Tabular ACLED Counts
+remote_explosive_landmine_ied,0.0,active,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,active,Tabular ACLED Counts
+agreement,0.0,active,Tabular ACLED Counts
+headquarters_or_base_established,0.0,active,Tabular ACLED Counts
+grenade,0.0,active,Tabular ACLED Counts
+disrupted_weapons_use,0.0,active,Tabular ACLED Counts
+chemical_weapon,0.0,active,Tabular ACLED Counts
+air_drone_strike,0.0,active,Tabular ACLED Counts
