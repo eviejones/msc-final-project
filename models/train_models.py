@@ -70,6 +70,18 @@ def compute_shap_importance(
     )
     return importance_df.head(top_n)
 
+def shap_category(feature_name):
+    feature_name = str(feature_name).lower()
+    if feature_name.startswith("emb_") or feature_name.startswith("pc"):
+        return "Text Embeddings"
+    if feature_name.startswith("rolling_"):
+        return "Structural Baseline (Rolling Stats)"
+    if "rain" in feature_name:
+        return "Rainfall"
+    if "price" in feature_name:
+        return "Food Prices"
+    return "Tabular ACLED Counts"
+
 
 def train_evaluate_model(
     processed_df: pd.DataFrame,
@@ -254,15 +266,30 @@ def train_evaluate_model(
         best_model = random_search.best_estimator_
         fitted_best_params = random_search.best_params_
 
+    # ---- SHAP Computation
     shap_importance = None
     if compute_shap:
-        if shap_sample_size is not None and len(X_train) > shap_sample_size:
-            X_shap = X_train.sample(shap_sample_size, random_state=7)
-        else:
-            X_shap = X_train
-        shap_importance = compute_shap_importance(
-            best_model, X_shap, final_predictor_cols
-        )
+        shap_dfs = []
+        datasets = {
+            "train": X_train,
+            "onset": X_onset,
+            "active": X_active
+        }
+        
+        for split_name, X_split in datasets.items():
+            if shap_sample_size is not None and len(X_split) > shap_sample_size:
+                X_shap = X_split.sample(shap_sample_size, random_state=7)
+            else:
+                X_shap = X_split
+                
+            split_shap_df = compute_shap_importance(
+                best_model, X_shap, final_predictor_cols
+            )
+            split_shap_df["dataset"] = split_name
+            shap_dfs.append(split_shap_df)
+            
+        shap_importance = pd.concat(shap_dfs, ignore_index=True)
+        shap_importance["category"] = shap_importance["feature"].apply(shap_category)
 
     oof_y_true, oof_y_proba = timeseries_cross_val_predict(
         best_model, X_train, y_train, grouped_timeseries_cv
@@ -278,6 +305,10 @@ def train_evaluate_model(
         optimal_threshold = thresholds[tied_indices[-1]]
     else:      
         optimal_threshold = thresholds[np.argmax(f1_scores)] # Old incorrect threshold now just used for comparison
+        
+    # Evaluate on train
+    train_cv_aupr = average_precision_score(oof_y_true, oof_y_proba)
+    train_cv_f1 = max_f1
 
     # Evaluate on onset test set
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
@@ -307,6 +338,9 @@ def train_evaluate_model(
     results = {
         "optimal_threshold": f"{optimal_threshold:.4f}",
         "n_predictors": len(final_predictor_cols),
+        # Train Metrics
+        "train_cv_aupr": f"{train_cv_aupr:.4f}",
+        "train_cv_f1": f"{train_cv_f1:.4f}",
         # Onset Metrics
         "onset_aupr": f"{average_precision_score(y_onset, y_pred_proba_onset):.4f}",
         "onset_precision_class1": f"{onset_report[class_key]['precision']:.4f}",
