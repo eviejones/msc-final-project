@@ -18,3 +18,4 @@ pycountry
 shap
 plotly
 nbformat
+setuptools
