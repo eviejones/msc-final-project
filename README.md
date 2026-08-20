@@ -111,7 +111,7 @@ region exceed `k` standard deviations above its rolling mean the following month
   scored on average precision, orchestrated by
   [`models/train_models.py`](models/train_models.py)'s `train_evaluate_model`.
 
-### `run_best_model.ipynb` - evaluate the winning configuration(s) #TODO
+### `run_best_model.py` - evaluate the winning configuration(s) #TODO
 
 Runs one or more fixed, hand-picked configurations directly (skipping the
 hyperparameter search) using `train_evaluate_model(..., best_params=True)`, and does
