@@ -3,6 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from utils.logger import get_logger
+
+logger = get_logger("Reporting")
+
 REPORTS_DIR = Path("evaluation/model_reports")
 reports_dir = Path(REPORTS_DIR)
 reports_dir.mkdir(parents=True, exist_ok=True)
@@ -32,6 +36,7 @@ def save_model_report(label: str, results: dict, best_params: dict, shap_importa
     shap_importance.to_csv(REPORTS_DIR / f"{label_formatted}_shap.csv", index=False)
     onset_predictions.to_csv(REPORTS_DIR / f"{label_formatted}_onset_predictions.csv", index=False)
     
+    logger.info(f"Model reports for '{label}' successfully saved to: {REPORTS_DIR.resolve()}")
     
 def open_model_report(label: str):
     """Loads the saved evaluation artefacts for a specific model label.
