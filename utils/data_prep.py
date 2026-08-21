@@ -66,9 +66,29 @@ def split_data(
 
     return split_df, y, X
 
-def validate_data_inputs(data_sources: list[str] | None = None,
+def validate_data_inputs(
+    data_sources: list[str] | None = None,
     k: float = 0.5,
-    event_col: str = "event_type"):
+    event_col: str = "event_type"
+) -> None:
+    """Validates the input parameters for combining datasets.
+
+    Checks that the provided data sources, threshold multiplier (k), and 
+    event column are of the correct type and contain permitted values.
+    Also triggers a validation of the global date ranges.
+
+    Args:
+        data_sources (list[str] | None, optional): A list of additional data 
+            sources to merge. Valid options are "food", "rain", and "text". 
+            Defaults to None.
+        k (float, optional): The standard deviation multiplier. Defaults to 0.5.
+        event_col (str, optional): The target column for events. Must be either 
+            "event_type" or "sub_event_type". Defaults to "event_type".
+
+    Raises:
+        TypeError: If data_sources is not a list/None, or if k is not numeric.
+        ValueError: If unsupported data sources or event columns are provided.
+    """
     # Validate dates
     validate_date_ranges()
     
@@ -101,7 +121,6 @@ def validate_data_inputs(data_sources: list[str] | None = None,
         raise ValueError(
             f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
         )
-    
 
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
