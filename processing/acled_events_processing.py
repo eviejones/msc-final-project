@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from ingest.acled_client import AcledClient
-from utils.constants import COUNTRY
+from utils.constants import COUNTRY, TRAIN_START_DATE
 from utils.dates import END_DATE, WARMUP_START_DATE_6_MONTHS
 from utils.logger import get_logger
 
@@ -147,6 +147,11 @@ def pre_process_data(
         .sort_values(by=["year_month", "region"])
         .reset_index(drop=True)
     )
+
+    # Remove the 6-month warmup buffer now that the rolling baseline is computed
+    combined_df = combined_df[
+        combined_df["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
+    ].reset_index(drop=True)
 
     return combined_df, predictor_cols
 

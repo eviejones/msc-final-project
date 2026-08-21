@@ -5,7 +5,7 @@ import processing.acled_events_processing as acled
 import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
-from utils.dates import END_DATE, TRAIN_START_DATE
+from utils.dates import END_DATE, TRAIN_START_DATE, validate_data_coverage
 from utils.logger import get_logger
 
 logger = get_logger("Data preparation")
@@ -115,7 +115,7 @@ def get_clean_combined_data(
             f"k must be a numeric value (float or int), got {type(k).__name__}"
         )
 
-    # Validate event_col
+    # ---- Validate event_col
     valid_event_cols = {"event_type", "sub_event_type"}
     if event_col not in valid_event_cols:
         raise ValueError(
@@ -129,6 +129,8 @@ def get_clean_combined_data(
     combined_df = processed_acled_df
     predictor_cols = acled_predictor_cols
     logger.info("ACLED data processed.")
+
+    processed_datasets = {"ACLED events": processed_acled_df}
 
     all_regions = combined_df["region"].unique()
     all_months = pd.period_range(TRAIN_START_DATE, END_DATE, freq="M")
@@ -145,6 +147,7 @@ def get_clean_combined_data(
                 processed_food_df, on=["region", "year_month"], how="left"
             )
             predictor_cols = predictor_cols + food_predictor_cols
+            processed_datasets["Food prices"] = processed_food_df
             logger.info("Food prices data processed.")
         if "rain" in sources_lower:
             processed_rain_df, rain_predictor_cols = rain.get_clean_data(
@@ -155,6 +158,7 @@ def get_clean_combined_data(
                 processed_rain_df, on=["region", "year_month"], how="left"
             )
             predictor_cols = predictor_cols + rain_predictor_cols
+            processed_datasets["Rainfall"] = processed_rain_df
             logger.info("Rainfall data processed.")
         if "text" in sources_lower:
             processed_notes_df, notes_prediction_cols = notes.get_clean_data(
@@ -173,5 +177,10 @@ def get_clean_combined_data(
                 combined_df["has_acled_event"].fillna(0).astype(int)
             )
             predictor_cols = predictor_cols + notes_prediction_cols
+            processed_datasets["Text embeddings"] = processed_notes_df
             logger.info("Notes data processed.")
+
+    # ---- Validate that every processed source covers TRAIN_START_DATE - END_DATE
+    validate_data_coverage(processed_datasets)
+
     return combined_df, predictor_cols
