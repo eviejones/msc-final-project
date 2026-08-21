@@ -5,7 +5,12 @@ import processing.acled_events_processing as acled
 import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
-from utils.dates import END_DATE, TRAIN_START_DATE, validate_data_coverage
+from utils.dates import (
+    END_DATE,
+    TRAIN_START_DATE,
+    validate_data_coverage,
+    validate_date_ranges,
+)
 from utils.logger import get_logger
 
 logger = get_logger("Data preparation")
@@ -61,6 +66,42 @@ def split_data(
 
     return split_df, y, X
 
+def validate_data_inputs(data_sources: list[str] | None = None,
+    k: float = 0.5,
+    event_col: str = "event_type"):
+    # Validate dates
+    validate_date_ranges()
+    
+    # Validate data_sources
+    if data_sources is not None:
+        if not isinstance(data_sources, list):
+            raise TypeError(
+                f"data_sources must be a list or None, got {type(data_sources).__name__}"
+            )
+
+        valid_sources = {"food", "rain", "text"}
+        sources_lower = [source.lower() for source in data_sources]
+        invalid_sources = [src for src in sources_lower if src not in valid_sources]
+
+        if invalid_sources:
+            raise ValueError(
+                f"Invalid data_sources provided: {invalid_sources}. "
+                f"Allowed sources are: {list(valid_sources)}"
+            )
+
+    # Validate k
+    if not isinstance(k, (int, float)):
+        raise TypeError(
+            f"k must be a numeric value (float or int), got {type(k).__name__}"
+        )
+
+    # Validate event_col
+    valid_event_cols = {"event_type", "sub_event_type"}
+    if event_col not in valid_event_cols:
+        raise ValueError(
+            f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
+        )
+    
 
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
@@ -91,37 +132,9 @@ def get_clean_combined_data(
         predictor_cols (list[str]): A complete list of predictor column
         names from all merged datasets.
     """
-    # ---- Validate inputs
-    # Validate data_sources
-    if data_sources is not None:
-        if not isinstance(data_sources, list):
-            raise TypeError(
-                f"data_sources must be a list or None, got {type(data_sources).__name__}"
-            )
-
-        valid_sources = {"food", "rain", "text"}
-        sources_lower = [source.lower() for source in data_sources]
-        invalid_sources = [src for src in sources_lower if src not in valid_sources]
-
-        if invalid_sources:
-            raise ValueError(
-                f"Invalid data_sources provided: {invalid_sources}. "
-                f"Allowed sources are: {list(valid_sources)}"
-            )
-
-    # ---- Validate k
-    if not isinstance(k, (int, float)):
-        raise TypeError(
-            f"k must be a numeric value (float or int), got {type(k).__name__}"
-        )
-
-    # ---- Validate event_col
-    valid_event_cols = {"event_type", "sub_event_type"}
-    if event_col not in valid_event_cols:
-        raise ValueError(
-            f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
-        )
-
+    # ---- Validation
+    validate_data_inputs(data_sources, k, event_col)
+    
     # ---- Fetch data (always fetch ACLED as the base dataset)
     processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
         k=k, event_col=event_col
@@ -131,9 +144,13 @@ def get_clean_combined_data(
     logger.info("ACLED data processed.")
 
     processed_datasets = {"ACLED events": processed_acled_df}
+    
+    # ---- Set region/month based on ACLED and testing and training period
 
     all_regions = combined_df["region"].unique()
     all_months = pd.period_range(TRAIN_START_DATE, END_DATE, freq="M")
+    
+    # ---- Get data for each of the additional sources
 
     if data_sources is not None:
         sources_lower = [source.lower() for source in data_sources]
@@ -166,15 +183,9 @@ def get_clean_combined_data(
                 all_regions=all_regions,
                 all_months=all_months,
                 conflict_only=conflict_only_embeddings,
-                # Reads locally saved embeddings from unless FORCE_DOWNLOAD is set
             )
             combined_df = combined_df.merge(
                 processed_notes_df, on=["region", "year_month"], how="left"
-            )
-            emb_fill_cols = [c for c in notes_prediction_cols if c.startswith("emb_")]
-            combined_df[emb_fill_cols] = combined_df[emb_fill_cols].fillna(0.0)
-            combined_df["has_acled_event"] = (
-                combined_df["has_acled_event"].fillna(0).astype(int)
             )
             predictor_cols = predictor_cols + notes_prediction_cols
             processed_datasets["Text embeddings"] = processed_notes_df
