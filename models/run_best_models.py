@@ -1,17 +1,17 @@
-
-
-
-import json
+"""Runs the best model configs. These are manually added! The reports are saved in the evaluation folder."""
 from pathlib import Path
 
-import pandas as pd
-
 from train_models import train_evaluate_model
+
 from utils.data_prep import get_clean_combined_data
+from utils.logger import get_logger
+from utils.reporting import save_model_report
 
 REPORTS_DIR = Path("evaluation/model_reports")
 reports_dir = Path(REPORTS_DIR)
 reports_dir.mkdir(parents=True, exist_ok=True)
+
+logger = get_logger("Run best models")
 
 
 def summarise(label, subset):
@@ -124,112 +124,97 @@ def model_report(label, config, params):
 
     return results, best_params, shap_importance, onset_predictions, comparison_row
 
+def main():
+    """Executes the reporting pipeline for all best model configurations."""
+    
+    # ---- Model A - Structural only
+    model_a_config = {
+        "include_food": True, "include_rain": True, "include_text": False,
+        "conflict_only": None, "k": 1.75, "event_col": "sub_event_type",
+        "n_splits": 5, "use_pca": False,
+    }
+    model_a_xgb_params = {
+        "max_depth": 3, "min_child_weight": 1, "max_delta_step": 0, "gamma": 0,
+        "learning_rate": 0.01, "subsample": 0.6, "colsample_bytree": 0.8,
+        "reg_alpha": 2.0, "reg_lambda": 1, "colsample_bylevel": 1.0,
+    }
+    results_a, best_params_a, shap_a, onset_preds_a, row_a = model_report(
+        "Model A", model_a_config, model_a_xgb_params
+    )
+    save_model_report("Model A", results_a, best_params_a, shap_a, onset_preds_a)
 
-def save_model_report(label, results, best_params, shap_importance, onset_predictions):
-    label_formatted = label.replace(" ", "_").replace("(", "").replace(")", "")
-    with open(REPORTS_DIR / f"{label_formatted}_results.json", "w") as f:
-        json.dump(results, f, indent=2)
-    with open(REPORTS_DIR / f"{label_formatted}_best_params.json", "w") as f:
-        json.dump(best_params, f, indent=2)
-    shap_importance.to_csv(REPORTS_DIR / f"{label_formatted}_shap.csv", index=False)
-    onset_predictions.to_csv(REPORTS_DIR / f"{label_formatted}_onset_predictions.csv", index=False)
+    # ---- Model B - conflict-only text, PCA
+    model_b_conflict_pca_config = {
+        "include_food": True, "include_rain": True, "include_text": True,
+        "conflict_only": True, "k": 1.75, "event_col": "sub_event_type",
+        "n_splits": 5, "use_pca": True,
+    }
+    model_b_conflict_pca_xgb_params = {
+        "max_depth": 7, "min_child_weight": 1, "max_delta_step": 0, "gamma": 3,
+        "learning_rate": 0.01, "subsample": 1.0, "colsample_bytree": 1.0,
+        "reg_alpha": 2.0, "reg_lambda": 10, "colsample_bylevel": 0.8,
+    }
+    (results_b_conflict_pca, best_params_b_conflict_pca, shap_b_conflict_pca,
+     onset_preds_b_conflict_pca, row_b_conflict_pca) = model_report(
+        "Model B (conflict-only text PCA)", model_b_conflict_pca_config, model_b_conflict_pca_xgb_params
+    )
+    save_model_report("Model B (conflict-only text PCA)", results_b_conflict_pca,
+        best_params_b_conflict_pca, shap_b_conflict_pca, onset_preds_b_conflict_pca)
+
+    # ---- Model B - conflict-only text, non-PCA
+    model_b_conflict_nopca_config = {
+        "include_food": True, "include_rain": True, "include_text": True,
+        "conflict_only": True, "k": 1.75, "event_col": "event_type",
+        "n_splits": 5, "use_pca": False,
+    }
+    model_b_conflict_nopca_xgb_params = {
+        "max_depth": 7, "min_child_weight": 1, "max_delta_step": 5, "gamma": 0,
+        "learning_rate": 0.01, "subsample": 1.0, "colsample_bytree": 0.8,
+        "reg_alpha": 0.1, "reg_lambda": 10, "colsample_bylevel": 0.6,
+    }
+    (results_b_conflict_nopca, best_params_b_conflict_nopca, shap_b_conflict_nopca,
+     onset_preds_b_conflict_nopca, row_b_conflict_nopca) = model_report(
+        "Model B (conflict-only text non-PCA)", model_b_conflict_nopca_config, model_b_conflict_nopca_xgb_params
+    )
+    save_model_report("Model B (conflict-only text non-PCA)", results_b_conflict_nopca,
+        best_params_b_conflict_nopca, shap_b_conflict_nopca, onset_preds_b_conflict_nopca)
+
+    # ---- Model B - all-event text, non-PCA
+    model_b_all_nopca_config = {
+        "include_food": True, "include_rain": True, "include_text": True,
+        "conflict_only": False, "k": 1.75, "event_col": "event_type",
+        "n_splits": 5, "use_pca": False,
+    }
+    model_b_all_nopca_xgb_params = {
+        "max_depth": 5, "min_child_weight": 1, "max_delta_step": 1, "gamma": 5,
+        "learning_rate": 0.01, "subsample": 0.6, "colsample_bytree": 0.8,
+        "reg_alpha": 1.0, "reg_lambda": 5, "colsample_bylevel": 1.0,
+    }
+    (results_b_all_nopca, best_params_b_all_nopca, shap_b_all_nopca,
+     onset_preds_b_all_nopca, row_b_all_nopca) = model_report(
+        "Model B (all-event text non-PCA)", model_b_all_nopca_config, model_b_all_nopca_xgb_params
+    )
+    save_model_report("Model B (all-event text non-PCA)", results_b_all_nopca,
+        best_params_b_all_nopca, shap_b_all_nopca, onset_preds_b_all_nopca)
+
+    # ---- Model B - all-event text, PCA
+    model_b_all_pca_config = {
+        "include_food": True, "include_rain": True, "include_text": True,
+        "conflict_only": False, "k": 1.75, "event_col": "sub_event_type",
+        "n_splits": 5, "use_pca": True,
+    }
+    model_b_all_pca_xgb_params = {
+        "max_depth": 5, "min_child_weight": 1, "max_delta_step": 1, "gamma": 5,
+        "learning_rate": 0.01, "subsample": 0.8, "colsample_bytree": 0.8,
+        "reg_alpha": 2.0, "reg_lambda": 10, "colsample_bylevel": 1.0,
+    }
+    (results_b_all_pca, best_params_b_all_pca, shap_b_all_pca,
+     onset_preds_b_all_pca, row_b_all_pca) = model_report(
+        "Model B (all-event text PCA)", model_b_all_pca_config, model_b_all_pca_xgb_params
+    )
+    save_model_report("Model B (all-event text PCA)", results_b_all_pca,
+        best_params_b_all_pca, shap_b_all_pca, onset_preds_b_all_pca)
 
 
-# Model A - Structural only
-model_a_config = {
-    "include_food": True, "include_rain": True, "include_text": False,
-    "conflict_only": None, "k": 1.75, "event_col": "sub_event_type",
-    "n_splits": 5, "use_pca": False,
-}
-model_a_xgb_params = {
-    "max_depth": 3, "min_child_weight": 1, "max_delta_step": 0, "gamma": 0,
-    "learning_rate": 0.01, "subsample": 0.6, "colsample_bytree": 0.8,
-    "reg_alpha": 2.0, "reg_lambda": 1, "colsample_bylevel": 1.0,
-}
-results_a, best_params_a, shap_a, onset_preds_a, row_a = model_report(
-    "Model A", model_a_config, model_a_xgb_params
-)
-save_model_report("Model A", results_a, best_params_a, shap_a, onset_preds_a)
-
-
-# Model B - conflict-only text, PCA
-
-model_b_conflict_pca_config = {
-    "include_food": True, "include_rain": True, "include_text": True,
-    "conflict_only": True, "k": 1.75, "event_col": "sub_event_type",
-    "n_splits": 5, "use_pca": True,
-}
-# (acled_sub_food_rain_text_conflict_pca_1.75_5, onset_aupr=0.3941)
-model_b_conflict_pca_xgb_params = {
-    "max_depth": 7, "min_child_weight": 1, "max_delta_step": 0, "gamma": 3,
-    "learning_rate": 0.01, "subsample": 1.0, "colsample_bytree": 1.0,
-    "reg_alpha": 2.0, "reg_lambda": 10, "colsample_bylevel": 0.8,
-}
-(results_b_conflict_pca, best_params_b_conflict_pca, shap_b_conflict_pca,
- onset_preds_b_conflict_pca, row_b_conflict_pca) = model_report(
-    "Model B (conflict-only text PCA)", model_b_conflict_pca_config, model_b_conflict_pca_xgb_params
-)
-save_model_report("Model B (conflict-only text PCA)", results_b_conflict_pca,
-    best_params_b_conflict_pca, shap_b_conflict_pca, onset_preds_b_conflict_pca)
-
-
-# Model B - conflict-only text, non-PCA
-
-model_b_conflict_nopca_config = {
-    "include_food": True, "include_rain": True, "include_text": True,
-    "conflict_only": True, "k": 1.75, "event_col": "event_type",
-    "n_splits": 5, "use_pca": False,
-}
-# (acled_event_food_rain_text_conflict_threshold_change_1.75_5, onset_aupr=0.3639)
-model_b_conflict_nopca_xgb_params = {
-    "max_depth": 7, "min_child_weight": 1, "max_delta_step": 5, "gamma": 0,
-    "learning_rate": 0.01, "subsample": 1.0, "colsample_bytree": 0.8,
-    "reg_alpha": 0.1, "reg_lambda": 10, "colsample_bylevel": 0.6,
-}
-(results_b_conflict_nopca, best_params_b_conflict_nopca, shap_b_conflict_nopca,
- onset_preds_b_conflict_nopca, row_b_conflict_nopca) = model_report(
-    "Model B (conflict-only text non-PCA)", model_b_conflict_nopca_config, model_b_conflict_nopca_xgb_params
-)
-save_model_report("Model B (conflict-only text non-PCA)", results_b_conflict_nopca,
-    best_params_b_conflict_nopca, shap_b_conflict_nopca, onset_preds_b_conflict_nopca)
-
-
-# Model B - all-event text, non-PCA
-
-model_b_all_nopca_config = {
-    "include_food": True, "include_rain": True, "include_text": True,
-    "conflict_only": False, "k": 1.75, "event_col": "event_type",
-    "n_splits": 5, "use_pca": False,
-}
-model_b_all_nopca_xgb_params = {
-    "max_depth": 5, "min_child_weight": 1, "max_delta_step": 1, "gamma": 5,
-    "learning_rate": 0.01, "subsample": 0.6, "colsample_bytree": 0.8,
-    "reg_alpha": 1.0, "reg_lambda": 5, "colsample_bylevel": 1.0,
-}
-(results_b_all_nopca, best_params_b_all_nopca, shap_b_all_nopca,
- onset_preds_b_all_nopca, row_b_all_nopca) = model_report(
-    "Model B (all-event text non-PCA)", model_b_all_nopca_config, model_b_all_nopca_xgb_params
-)
-save_model_report("Model B (all-event text non-PCA)", results_b_all_nopca,
-    best_params_b_all_nopca, shap_b_all_nopca, onset_preds_b_all_nopca)
-
-
-# Model B - all-event text, PCA
-
-model_b_all_pca_config = {
-    "include_food": True, "include_rain": True, "include_text": True,
-    "conflict_only": False, "k": 1.75, "event_col": "sub_event_type",
-    "n_splits": 5, "use_pca": True,
-}
-# (acled_sub_food_rain_text_all_threshold_change_pca_1.75_5, onset_aupr=0.3127)
-model_b_all_pca_xgb_params = {
-    "max_depth": 5, "min_child_weight": 1, "max_delta_step": 1, "gamma": 5,
-    "learning_rate": 0.01, "subsample": 0.8, "colsample_bytree": 0.8,
-    "reg_alpha": 2.0, "reg_lambda": 10, "colsample_bylevel": 1.0,
-}
-(results_b_all_pca, best_params_b_all_pca, shap_b_all_pca,
- onset_preds_b_all_pca, row_b_all_pca) = model_report(
-    "Model B (all-event text PCA)", model_b_all_pca_config, model_b_all_pca_xgb_params
-)
-save_model_report("Model B (all-event text PCA)", results_b_all_pca,
-    best_params_b_all_pca, shap_b_all_pca, onset_preds_b_all_pca)
+if __name__ == "__main__":
+    main()
