@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
-REPORTS_DIR = Path("evaluation/model_reports")
+from utils.constants import REPORTS_DIR
+
 reports_dir = Path(REPORTS_DIR)
 reports_dir.mkdir(parents=True, exist_ok=True)
 

@@ -7,11 +7,11 @@ from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY
 from utils.logger import get_logger
 
-logger = get_logger("Name Mapping")
+logger = get_logger("Name mapping")
 
 FUZZY_MATCH_CUTOFF = 0.8
 
-# As Sudan has been the focus of this project, the region name differences have been mnaully added. For other countries, fuzzy matching has been included
+# As Sudan has been the focus of this project, the region name differences have been manually added. For other countries, fuzzy matching can be used. 
 STATE_NAME_OVERRIDES = {
     "Sudan": {
         "Al Gezira": "Al Jazirah",

@@ -1,3 +1,5 @@
+"""Functions used for cross validation. Ensures cross-validation does not mix up time series."""
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone

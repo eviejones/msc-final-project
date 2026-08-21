@@ -1,3 +1,4 @@
+"""Main functions for preparing ALL data. Different to individual data source processing in the processing folder."""
 import pandas as pd
 
 import processing.acled_events_processing as acled
@@ -108,7 +109,7 @@ def get_clean_combined_data(
                 f"Allowed sources are: {list(valid_sources)}"
             )
 
-    # Validate k
+    # ---- Validate k
     if not isinstance(k, (int, float)):
         raise TypeError(
             f"k must be a numeric value (float or int), got {type(k).__name__}"
