@@ -3,12 +3,24 @@ from pathlib import Path
 
 import pandas as pd
 
-from utils.constants import REPORTS_DIR
-
+REPORTS_DIR = Path("evaluation/model_reports")
 reports_dir = Path(REPORTS_DIR)
 reports_dir.mkdir(parents=True, exist_ok=True)
 
-def save_model_report(label, results, best_params, shap_importance, onset_predictions):
+def save_model_report(label: str, results: dict, best_params: dict, shap_importance: pd.DataFrame, onset_predictions: pd.DataFrame):
+    """Saves the evaluation artefacts for a specific machine learning model.
+
+    Formats the provided label into a file-system-friendly string and saves 
+    the model's metrics, optimised hyperparameters, SHAP importances, and 
+    onset predictions to the reports directory.
+
+    Args:
+        label (str): The human-readable name or identifier of the model.
+        results (dict): A dictionary containing the model's evaluation metrics.
+        best_params (dict): A dictionary containing the model's optimised hyperparameters.
+        shap_importance (pd.DataFrame): A DataFrame detailing the SHAP feature importances.
+        onset_predictions (pd.DataFrame): A DataFrame containing the onset predictions.
+    """
     label_formatted = label.replace(" ", "_").replace("(", "").replace(")","")
     
     with open(REPORTS_DIR / f"{label_formatted}_results.json", "w") as f:
@@ -21,7 +33,21 @@ def save_model_report(label, results, best_params, shap_importance, onset_predic
     onset_predictions.to_csv(REPORTS_DIR / f"{label_formatted}_onset_predictions.csv", index=False)
     
     
-def open_model_report(label):
+def open_model_report(label: str):
+    """Loads the saved evaluation artefacts for a specific model label.
+
+    Args:
+        label (str): The original human-readable identifier of the model 
+            used during saving.
+
+    Returns:
+        tuple: A 4-tuple containing:
+            - results (pd.DataFrame): A 1-row DataFrame of the model's evaluation 
+              results, including the model label.
+            - best_params (pd.DataFrame): A 1-row DataFrame of the best hyperparameters.
+            - shap_importance (pd.DataFrame): The SHAP feature importances.
+            - onset_predictions (pd.DataFrame): The onset predictions.
+    """
     label_formatted = label.replace(" ", "_").replace("(", "").replace(")","")
 
     with open(REPORTS_DIR / f"{label_formatted}_results.json") as f:
@@ -37,7 +63,24 @@ def open_model_report(label):
     
     return results, best_params, shap_importance, onset_predictions
 
+
 def read_model_reports(files):
+    """Compiles and aggregates evaluation reports from multiple models.
+
+    Reads the artefacts for a provided list of model labels, concatenates them 
+    into unified DataFrames, and standardises the metrics into a melted format 
+    for easier downstream analysis and plotting.
+
+    Args:
+        files (list of str): A list of model labels (identifiers) to process.
+
+    Returns:
+        tuple: A 3-tuple containing:
+            - df_melted (pd.DataFrame): A melted DataFrame of all model metrics 
+              (columns: 'model', 'metric', 'score').
+            - all_shap (pd.DataFrame): Concatenated SHAP importances across all models.
+            - all_onset (pd.DataFrame): Concatenated onset predictions across all models.
+    """
     result_list = []
     shap_list = []
     onset_list = []
