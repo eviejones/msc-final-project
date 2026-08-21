@@ -1,3 +1,5 @@
+"""Settings for logger to stop code being repeated."""
+
 import logging
 
 
