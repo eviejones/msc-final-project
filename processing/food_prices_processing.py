@@ -66,120 +66,11 @@ def read_food_prices(all_regions: np.ndarray | None = None) -> pd.DataFrame:
 
     return renamed_df
 
-
-# def process_and_pivot_food_prices(
-#     df_prices: pd.DataFrame,
-#     all_regions: np.ndarray | None,
-#     all_months: pd.PeriodIndex | None,
-# ) -> pd.DataFrame:
-#     """Aggregates and pivots food price data to create time-series features.
-
-#     This function filters the dataset starting one month prior to the global
-#     start date (for the burn-in buffer), calculates the median monthly price,
-#     ensures a continuous monthly timeline, and forward-fills missing gaps.
-#     The data is then pivoted, shifted by 1 month to create lag features,
-#     and sliced to start exactly at the target training date.
-
-#     Args:
-#         df_prices (pd.DataFrame): The cleaned food prices DataFrame.
-#         all_regions (np.ndarray | None): Array of all unique regions for the
-#             Cartesian spine. If None, derived from `df_prices`.
-#         all_months (pd.PeriodIndex | None): Array of all target months for the
-#             Cartesian spine. If None, derived from `df_prices`.
-
-#     Returns:
-#         pd.DataFrame: A continuous time-series DataFrame indexed by region
-#             and 'year_month', featuring 1-month lagged median prices.
-#     """
-#     df_grouped = (
-#         df_prices.groupby(["region", "year_month", "commodity"])["usdprice_per_kg"]
-#         .median()
-#         .reset_index()
-#     )
-
-#     df_padded, final_regions, padded_months = get_padded_index(
-#         df_grouped, all_regions, all_months, WARMUP_START_DATE_1_MONTH
-#     )
-#     all_commodities = df_grouped["commodity"].unique()
-
-#     full_padded_index = pd.MultiIndex.from_product(
-#         [final_regions, padded_months, all_commodities],
-#         names=["region", "year_month", "commodity"],
-#     )
-
-#     df_expanded = (
-#         df_padded.set_index(["region", "year_month", "commodity"])
-#         .reindex(full_padded_index)
-#         .reset_index()
-#         .sort_values(["region", "commodity", "year_month"])
-#     )
-
-#     df_expanded["usdprice_per_kg"] = df_expanded.groupby(["region", "commodity"])[
-#         "usdprice_per_kg"
-#     ].transform(
-#         lambda x: x.ffill()
-#     )  # Forward fill on food data as we can assume that prices remain the same
-
-#     df_pivoted = df_expanded.pivot(
-#         index=["region", "year_month"],
-#         columns="commodity",
-#         values="usdprice_per_kg",
-#     ).reset_index()
-
-#     df_pivoted.columns.name = None
-#     df_pivoted.columns.name = None
-#     rename_map = {
-#         commodity: f"price_{commodity.lower().replace(' ', '_')}"
-#         for commodity in PRIMARY_COMMODITIES
-#     }
-#     df_pivoted = df_pivoted.rename(columns=rename_map)
-
-#     price_cols = [c for c in df_pivoted.columns if c.startswith("price_")]
-#     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
-#     df_pivoted = df_pivoted[
-#         df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")
-#     ].copy()
-
-#     return df_pivoted
-
-
-# def get_clean_data(
-#     all_regions: np.ndarray | None = None,
-#     all_months: pd.PeriodIndex | None = None,
-# ) -> tuple[pd.DataFrame, list[str]]:
-#     """An orchestrator function that runs the full food price data pipeline.
-
-#     This function calls the read and process functions in sequence, and extracts
-#     a list of predictor column names for downstream modelling. Any leading missing
-#     values are intentionally left as NaN to be handled natively by XGBoost's
-#     sparsity-aware split finding.
-
-#     Args:
-#         all_regions (np.ndarray | None, optional): Array of all unique regions
-#             for the Cartesian spine. Defaults to None.
-#         all_months (pd.PeriodIndex | None, optional): Array of all target
-#             months for the Cartesian spine. Defaults to None.
-
-#     Returns:
-#         tuple[pd.DataFrame, list[str]]: A tuple containing:
-#             - pd.DataFrame: The final machine-learning-ready dataset.
-#             - list[str]: A list of column names identifying the predictor
-#                 variables (the lagged price features).
-#     """
-#     food_prices_df = read_food_prices(all_regions)
-#     pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
-
-#     predictor_cols = [
-#         col for col in pivoted_df.columns if col not in ["region", "year_month"]
-#     ]
-
-#     return pivoted_df, predictor_cols
-
 def process_and_pivot_food_prices(
     df_prices: pd.DataFrame,
     all_regions: np.ndarray | None,
     all_months: pd.PeriodIndex | None,
-    include_staleness_flag: bool = False,
+    price_recency: bool = False,
 ) -> pd.DataFrame:
     """Aggregates and pivots food price data to create time-series features.
 
@@ -195,7 +86,7 @@ def process_and_pivot_food_prices(
             Cartesian spine. If None, derived from `df_prices`.
         all_months (pd.PeriodIndex | None): Array of all target months for the
             Cartesian spine. If None, derived from `df_prices`.
-        include_staleness_flag (bool, optional): If True, adds a
+        price_recency (bool, optional): If True, adds a
             'months_since_reading_{commodity}' column alongside each price
             column, counting the number of months since the last genuine
             (non-forward-filled) reading. Leading gaps (no reading ever
@@ -231,7 +122,7 @@ def process_and_pivot_food_prices(
         .sort_values(["region", "commodity", "year_month"])
     )
 
-    if include_staleness_flag:
+    if price_recency:
         df_expanded["is_actual_reading"] = df_expanded["usdprice_per_kg"].notna()
 
     df_expanded["usdprice_per_kg"] = df_expanded.groupby(["region", "commodity"])[
@@ -240,7 +131,7 @@ def process_and_pivot_food_prices(
         lambda x: x.ffill()
     )  # Forward fill on food data as we can assume that prices remain the same
 
-    if include_staleness_flag:
+    if price_recency:
         def months_since_last_reading(s: pd.Series) -> pd.Series:
             """Calculates the number of months since last readin."""
             group_id = s.cumsum()
@@ -253,7 +144,7 @@ def process_and_pivot_food_prices(
         )["is_actual_reading"].transform(months_since_last_reading)
 
     value_cols = ["usdprice_per_kg"]
-    if include_staleness_flag:
+    if price_recency:
         value_cols.append("months_since_reading")
 
     df_pivoted = df_expanded.pivot(
@@ -287,7 +178,7 @@ def process_and_pivot_food_prices(
 def get_clean_data(
     all_regions: np.ndarray | None = None,
     all_months: pd.PeriodIndex | None = None,
-    include_staleness_flag: bool = False,
+    price_recency: bool = False,
 ) -> tuple[pd.DataFrame, list[str]]:
     """An orchestrator function that runs the full food price data pipeline.
 
@@ -301,7 +192,7 @@ def get_clean_data(
             for the Cartesian spine. Defaults to None.
         all_months (pd.PeriodIndex | None, optional): Array of all target
             months for the Cartesian spine. Defaults to None.
-        include_staleness_flag (bool, optional): If True, adds a
+        price_recency (bool, optional): If True, adds a
             months-since-last-reading feature per commodity alongside price.
             Defaults to False, preserving the original pipeline's behaviour.
 
@@ -314,7 +205,7 @@ def get_clean_data(
     """
     food_prices_df = read_food_prices(all_regions)
     pivoted_df = process_and_pivot_food_prices(
-        food_prices_df, all_regions, all_months, include_staleness_flag
+        food_prices_df, all_regions, all_months, price_recency
     )
 
     predictor_cols = [
