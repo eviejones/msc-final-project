@@ -1,4 +1,5 @@
 """Runs the best model configs. These are manually added! The reports are saved in the evaluation folder."""
+
 from pathlib import Path
 
 import pandas as pd
@@ -17,19 +18,21 @@ logger = get_logger("Run best models")
 
 # The set config comes from the decisions made in results
 SET_CONFIG = {
-        "k": 1.75,
-        "threshold_fix_applied": True,
-        "event_col": "sub_event_type",
-        "include_food": True,
-        "include_rain": True,
-        "n_splits": 5
-    }
+    "k": 1.75,
+    "threshold_fix_applied": True,
+    "price_recency": True,
+    "event_col": "sub_event_type",
+    "include_food": True,
+    "include_rain": True,
+    "n_splits": 5,
+}
+
 
 def get_best_params_from_results(all_results, config):
     mask = pd.Series(True, index=all_results.index)
     for col, val in config.items():
         if col in all_results.columns:
-            mask &= (all_results[col] == val)
+            mask &= all_results[col] == val
 
     matches = all_results[mask]
     if len(matches) != 1:
@@ -38,15 +41,23 @@ def get_best_params_from_results(all_results, config):
         )
     row = matches.iloc[0]
 
-    param_names = [ # XGBoost params
-        "max_depth", "min_child_weight", "max_delta_step", "gamma",
-        "learning_rate", "subsample", "colsample_bytree",
-        "reg_alpha", "reg_lambda", "colsample_bylevel",
+    param_names = [  # XGBoost params
+        "max_depth",
+        "min_child_weight",
+        "max_delta_step",
+        "gamma",
+        "learning_rate",
+        "subsample",
+        "colsample_bytree",
+        "reg_alpha",
+        "reg_lambda",
+        "colsample_bylevel",
     ]
-    params = {p: row[f"param_{p}"] for p in param_names}
+    params = {p: row[f"param_{p}"].item() for p in param_names}
     for p in ["max_depth", "min_child_weight", "max_delta_step"]:
         params[p] = int(params[p])
     return params
+
 
 def summarise(label, subset):
     n_true_pos = subset["y_true"].sum()
@@ -82,7 +93,7 @@ def run_model(config, params):
         k=config["k"],
         event_col=config["event_col"],
         conflict_only_embeddings=config["conflict_only_embeddings"],
-        price_recency=config["price_recency"]
+        price_recency=config["price_recency"],
     )
 
     final_params = {
@@ -91,7 +102,7 @@ def run_model(config, params):
         "event_col": config["event_col"],
         "n_splits": config["n_splits"],
         "use_pca": config["use_pca"],
-        "price_recency": config["price_recency"]
+        "price_recency": config["price_recency"],
     }
 
     results, best_params, shap_importance, onset_predictions = train_evaluate_model(
@@ -128,8 +139,14 @@ def model_report(label, config, params):
     post_war_summary = summarise("Post-war (Apr-Dec 2023)", post_war)
 
     key_regions = [
-        "Khartoum", "North Darfur", "South Darfur", "West Darfur",
-        "Central Darfur", "East Darfur", "West Kordofan", "South Kordofan",
+        "Khartoum",
+        "North Darfur",
+        "South Darfur",
+        "West Darfur",
+        "Central Darfur",
+        "East Darfur",
+        "West Kordofan",
+        "South Kordofan",
     ]
 
     print("-----Key war-affected regions\n")
@@ -160,6 +177,7 @@ def model_report(label, config, params):
 
     return results, best_params, shap_importance, onset_predictions, comparison_row
 
+
 def main():
     """Executes the reporting pipeline for all Part 2 final model configurations."""
 
@@ -168,7 +186,9 @@ def main():
     # ---- Model A - Structural only
     model_a_config = {
         **SET_CONFIG,
-        "include_text": False, "conflict_only_embeddings": None, "use_pca": False,
+        "include_text": False,
+        "conflict_only_embeddings": False,
+        "use_pca": False,
     }
     model_a_params = get_best_params_from_results(all_results, model_a_config)
     results_a, best_params_a, shap_a, onset_preds_a, row_a = model_report(
@@ -179,59 +199,121 @@ def main():
     # ---- Model B - conflict-only text, PCA
     model_b_conflict_pca_config = {
         **SET_CONFIG,
-        "include_text": True, "conflict_only_embeddings": True, "use_pca": True,
+        "include_text": True,
+        "conflict_only_embeddings": True,
+        "use_pca": True,
     }
-    model_b_conflict_pca_params = get_best_params_from_results(all_results, model_b_conflict_pca_config)
-    (results_b_conflict_pca, best_params_b_conflict_pca, shap_b_conflict_pca,
-     onset_preds_b_conflict_pca, row_b_conflict_pca) = model_report(
-        "Model B (conflict-only text PCA)", model_b_conflict_pca_config, model_b_conflict_pca_params
+    model_b_conflict_pca_params = get_best_params_from_results(
+        all_results, model_b_conflict_pca_config
     )
-    save_model_report("Model B (conflict-only text PCA)", results_b_conflict_pca,
-        best_params_b_conflict_pca, shap_b_conflict_pca, onset_preds_b_conflict_pca)
+    (
+        results_b_conflict_pca,
+        best_params_b_conflict_pca,
+        shap_b_conflict_pca,
+        onset_preds_b_conflict_pca,
+        row_b_conflict_pca,
+    ) = model_report(
+        "Model B (conflict-only text PCA)",
+        model_b_conflict_pca_config,
+        model_b_conflict_pca_params,
+    )
+    save_model_report(
+        "Model B (conflict-only text PCA)",
+        results_b_conflict_pca,
+        best_params_b_conflict_pca,
+        shap_b_conflict_pca,
+        onset_preds_b_conflict_pca,
+    )
 
     # ---- Model B - conflict-only text, non-PCA
     model_b_conflict_nopca_config = {
         **SET_CONFIG,
-        "include_text": True, "conflict_only_embeddings": True, "use_pca": False,
+        "include_text": True,
+        "conflict_only_embeddings": True,
+        "use_pca": False,
     }
-    model_b_conflict_nopca_params = get_best_params_from_results(all_results, model_b_conflict_nopca_config)
-    (results_b_conflict_nopca, best_params_b_conflict_nopca, shap_b_conflict_nopca,
-     onset_preds_b_conflict_nopca, row_b_conflict_nopca) = model_report(
-        "Model B (conflict-only text non-PCA)", model_b_conflict_nopca_config, model_b_conflict_nopca_params
+    model_b_conflict_nopca_params = get_best_params_from_results(
+        all_results, model_b_conflict_nopca_config
     )
-    save_model_report("Model B (conflict-only text non-PCA)", results_b_conflict_nopca,
-        best_params_b_conflict_nopca, shap_b_conflict_nopca, onset_preds_b_conflict_nopca)
+    (
+        results_b_conflict_nopca,
+        best_params_b_conflict_nopca,
+        shap_b_conflict_nopca,
+        onset_preds_b_conflict_nopca,
+        row_b_conflict_nopca,
+    ) = model_report(
+        "Model B (conflict-only text non-PCA)",
+        model_b_conflict_nopca_config,
+        model_b_conflict_nopca_params,
+    )
+    save_model_report(
+        "Model B (conflict-only text non-PCA)",
+        results_b_conflict_nopca,
+        best_params_b_conflict_nopca,
+        shap_b_conflict_nopca,
+        onset_preds_b_conflict_nopca,
+    )
 
     # ---- Model B - all-event text, non-PCA
     model_b_all_nopca_config = {
         **SET_CONFIG,
-        "include_text": True, "conflict_only_embeddings": False, "use_pca": False,
+        "include_text": True,
+        "conflict_only_embeddings": False,
+        "use_pca": False,
     }
-    model_b_all_nopca_params = get_best_params_from_results(all_results, model_b_all_nopca_config)
-    (results_b_all_nopca, best_params_b_all_nopca, shap_b_all_nopca,
-     onset_preds_b_all_nopca, row_b_all_nopca) = model_report(
-        "Model B (all-event text non-PCA)", model_b_all_nopca_config, model_b_all_nopca_params
+    model_b_all_nopca_params = get_best_params_from_results(
+        all_results, model_b_all_nopca_config
     )
-    save_model_report("Model B (all-event text non-PCA)", results_b_all_nopca,
-        best_params_b_all_nopca, shap_b_all_nopca, onset_preds_b_all_nopca)
+    (
+        results_b_all_nopca,
+        best_params_b_all_nopca,
+        shap_b_all_nopca,
+        onset_preds_b_all_nopca,
+        row_b_all_nopca,
+    ) = model_report(
+        "Model B (all-event text non-PCA)",
+        model_b_all_nopca_config,
+        model_b_all_nopca_params,
+    )
+    save_model_report(
+        "Model B (all-event text non-PCA)",
+        results_b_all_nopca,
+        best_params_b_all_nopca,
+        shap_b_all_nopca,
+        onset_preds_b_all_nopca,
+    )
 
     # ---- Model B - all-event text, PCA
     model_b_all_pca_config = {
         **SET_CONFIG,
-        "include_text": True, "conflict_only_embeddings": False, "use_pca": True,
+        "include_text": True,
+        "conflict_only_embeddings": False,
+        "use_pca": True,
     }
-    model_b_all_pca_params = get_best_params_from_results(all_results, model_b_all_pca_config)
-    (results_b_all_pca, best_params_b_all_pca, shap_b_all_pca,
-     onset_preds_b_all_pca, row_b_all_pca) = model_report(
+    model_b_all_pca_params = get_best_params_from_results(
+        all_results, model_b_all_pca_config
+    )
+    (
+        results_b_all_pca,
+        best_params_b_all_pca,
+        shap_b_all_pca,
+        onset_preds_b_all_pca,
+        row_b_all_pca,
+    ) = model_report(
         "Model B (all-event text PCA)", model_b_all_pca_config, model_b_all_pca_params
     )
-    save_model_report("Model B (all-event text PCA)", results_b_all_pca,
-        best_params_b_all_pca, shap_b_all_pca, onset_preds_b_all_pca)
+    save_model_report(
+        "Model B (all-event text PCA)",
+        results_b_all_pca,
+        best_params_b_all_pca,
+        shap_b_all_pca,
+        onset_preds_b_all_pca,
+    )
 
 
 # def main():
 #     """Executes the reporting pipeline for all best model configurations."""
-    
+
 #     # ---- Model A - Structural only
 #     model_a_config = {
 #         "include_food": True, "include_rain": True, "include_text": False,
@@ -321,10 +403,9 @@ def main():
 #         best_params_b_all_pca, shap_b_all_pca, onset_preds_b_all_pca)
 
 
-
 # def main():
 #     """Executes the reporting pipeline for all best model configurations."""
-    
+
 #     # ---- Model A - Structural only
 #     model_a_config = {
 #         "include_food": True, "include_rain": True, "include_text": False,

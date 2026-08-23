@@ -1,4 +1,5 @@
 """Main functions for preparing ALL data. Different to individual data source processing in the processing folder."""
+
 import pandas as pd
 
 import processing.acled_events_processing as acled
@@ -66,23 +67,22 @@ def split_data(
 
     return split_df, y, X
 
+
 def validate_data_inputs(
-    data_sources: list[str] | None = None,
-    k: float = 0.5,
-    event_col: str = "event_type"
+    data_sources: list[str] | None = None, k: float = 0.5, event_col: str = "event_type"
 ) -> None:
     """Validates the input parameters for combining datasets.
 
-    Checks that the provided data sources, threshold multiplier (k), and 
+    Checks that the provided data sources, threshold multiplier (k), and
     event column are of the correct type and contain permitted values.
     Also triggers a validation of the global date ranges.
 
     Args:
-        data_sources (list[str] | None, optional): A list of additional data 
-            sources to merge. Valid options are "food", "rain", and "text". 
+        data_sources (list[str] | None, optional): A list of additional data
+            sources to merge. Valid options are "food", "rain", and "text".
             Defaults to None.
         k (float, optional): The standard deviation multiplier. Defaults to 0.5.
-        event_col (str, optional): The target column for events. Must be either 
+        event_col (str, optional): The target column for events. Must be either
             "event_type" or "sub_event_type". Defaults to "event_type".
 
     Raises:
@@ -91,7 +91,7 @@ def validate_data_inputs(
     """
     # Validate dates
     validate_date_ranges()
-    
+
     # Validate data_sources
     if data_sources is not None:
         if not isinstance(data_sources, list):
@@ -121,6 +121,7 @@ def validate_data_inputs(
         raise ValueError(
             f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
         )
+
 
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
@@ -154,7 +155,7 @@ def get_clean_combined_data(
     """
     # ---- Validation
     validate_data_inputs(data_sources, k, event_col)
-    
+
     # ---- Fetch data (always fetch ACLED as the base dataset)
     processed_acled_df, acled_predictor_cols, raw_acled_df = acled.get_clean_data(
         k=k, event_col=event_col
@@ -164,12 +165,12 @@ def get_clean_combined_data(
     logger.info("ACLED data processed.")
 
     processed_datasets = {"ACLED events": processed_acled_df}
-    
+
     # ---- Set region/month based on ACLED and testing and training period
 
     all_regions = combined_df["region"].unique()
     all_months = pd.period_range(TRAIN_START_DATE, END_DATE, freq="M")
-    
+
     # ---- Get data for each of the additional sources
 
     if data_sources is not None:
@@ -179,7 +180,7 @@ def get_clean_combined_data(
             processed_food_df, food_predictor_cols = food.get_clean_data(
                 all_regions=all_regions,
                 all_months=all_months,
-                price_recency=price_recency
+                price_recency=price_recency,
             )
             combined_df = combined_df.merge(
                 processed_food_df, on=["region", "year_month"], how="left"

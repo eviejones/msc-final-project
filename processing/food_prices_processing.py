@@ -66,6 +66,7 @@ def read_food_prices(all_regions: np.ndarray | None = None) -> pd.DataFrame:
 
     return renamed_df
 
+
 def process_and_pivot_food_prices(
     df_prices: pd.DataFrame,
     all_regions: np.ndarray | None,
@@ -132,6 +133,7 @@ def process_and_pivot_food_prices(
     )  # Forward fill on food data as we can assume that prices remain the same
 
     if price_recency:
+
         def months_since_last_reading(s: pd.Series) -> pd.Series:
             """Calculates the number of months since last readin."""
             group_id = s.cumsum()
@@ -166,7 +168,9 @@ def process_and_pivot_food_prices(
 
     df_pivoted[price_cols] = df_pivoted.groupby("region")[price_cols].shift(1)
     if staleness_cols:
-        df_pivoted[staleness_cols] = df_pivoted.groupby("region")[staleness_cols].shift(1)
+        df_pivoted[staleness_cols] = df_pivoted.groupby("region")[staleness_cols].shift(
+            1
+        )
 
     df_pivoted = df_pivoted[
         df_pivoted["year_month"] >= pd.Period(TRAIN_START_DATE, freq="M")

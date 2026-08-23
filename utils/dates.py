@@ -1,4 +1,5 @@
 """Functions for working with dates, such as validation."""
+
 import pandas as pd
 
 from utils.constants import (
@@ -19,6 +20,7 @@ WARMUP_START_DATE_1_MONTH = TRAIN_START_DATE - pd.DateOffset(
 
 END_DATE = ACTIVE_END_DATE  # The end of all data
 
+
 def validate_date_ranges() -> None:
     """
     Validates the TRAIN/ONSET/ACTIVE date constants defined in utils.constants.
@@ -38,7 +40,10 @@ def validate_date_ranges() -> None:
     ]
 
     for name, start, end in periods:
-        for bound_name, value in ((f"{name}_START_DATE", start), (f"{name}_END_DATE", end)):
+        for bound_name, value in (
+            (f"{name}_START_DATE", start),
+            (f"{name}_END_DATE", end),
+        ):
             if not isinstance(value, pd.Timestamp):
                 raise TypeError(
                     f"{bound_name} must be a pd.Timestamp, got {type(value).__name__}: {value!r}"

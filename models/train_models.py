@@ -70,6 +70,7 @@ def compute_shap_importance(
     )
     return importance_df.head(top_n)
 
+
 def shap_category(feature_name):
     feature_name = str(feature_name).lower()
     if feature_name.startswith("emb_") or feature_name.startswith("pc"):
@@ -94,7 +95,7 @@ def train_evaluate_model(
     compute_shap: bool = False,
     shap_sample_size: int | None = 2000,
     return_onset_predictions: bool = False,
-    threshold_fix: bool = True
+    threshold_fix: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
@@ -234,7 +235,15 @@ def train_evaluate_model(
     param_grid = {
         k: v
         for k, v in params.items()
-        if k not in ["k", "event_col", "n_splits", "remove_abyei", "use_pca", "price_recency"]
+        if k
+        not in [
+            "k",
+            "event_col",
+            "n_splits",
+            "remove_abyei",
+            "use_pca",
+            "price_recency",
+        ]
     }
 
     # ---- Model Training
@@ -272,24 +281,20 @@ def train_evaluate_model(
     shap_importance = None
     if compute_shap:
         shap_dfs = []
-        datasets = {
-            "train": X_train,
-            "onset": X_onset,
-            "active": X_active
-        }
-        
+        datasets = {"train": X_train, "onset": X_onset, "active": X_active}
+
         for split_name, X_split in datasets.items():
             if shap_sample_size is not None and len(X_split) > shap_sample_size:
                 X_shap = X_split.sample(shap_sample_size, random_state=7)
             else:
                 X_shap = X_split
-                
+
             split_shap_df = compute_shap_importance(
                 best_model, X_shap, final_predictor_cols
             )
             split_shap_df["dataset"] = split_name
             shap_dfs.append(split_shap_df)
-            
+
         shap_importance = pd.concat(shap_dfs, ignore_index=True)
         shap_importance["category"] = shap_importance["feature"].apply(shap_category)
 
@@ -300,16 +305,18 @@ def train_evaluate_model(
     # ---- Optimisation
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
-    
+
     if threshold_fix:
-        max_f1 = f1_scores.max()   # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
+        max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
         tied_indices = np.flatnonzero(f1_scores == max_f1)
         optimal_threshold = thresholds[tied_indices[-1]]
         print("Number of tied indices:")
         print(len(tied_indices))
-    else:      
-        optimal_threshold = thresholds[np.argmax(f1_scores)] # Old incorrect threshold now just used for comparison
-        
+    else:
+        optimal_threshold = thresholds[
+            np.argmax(f1_scores)
+        ]  # Old incorrect threshold now just used for comparison
+
     # Evaluate on train
     train_cv_aupr = average_precision_score(oof_y_true, oof_y_proba)
     train_cv_f1 = max_f1

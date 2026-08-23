@@ -11,7 +11,7 @@ logger = get_logger("Name mapping")
 
 FUZZY_MATCH_CUTOFF = 0.8
 
-# As Sudan has been the focus of this project, the region name differences have been manually added. For other countries, fuzzy matching can be used. 
+# As Sudan has been the focus of this project, the region name differences have been manually added. For other countries, fuzzy matching can be used.
 STATE_NAME_OVERRIDES = {
     "Sudan": {
         "Al Gezira": "Al Jazirah",
