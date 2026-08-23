@@ -127,7 +127,7 @@ def get_clean_combined_data(
     k: float = 0.5,
     event_col: str = "event_type",
     conflict_only_embeddings: bool = False,
-    price_recency: bool = False,
+    price_recency: bool = True,
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 

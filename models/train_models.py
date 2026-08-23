@@ -234,7 +234,7 @@ def train_evaluate_model(
     param_grid = {
         k: v
         for k, v in params.items()
-        if k not in ["k", "event_col", "n_splits", "remove_abyei", "use_pca"]
+        if k not in ["k", "event_col", "n_splits", "remove_abyei", "use_pca", "price_recency"]
     }
 
     # ---- Model Training
@@ -305,6 +305,8 @@ def train_evaluate_model(
         max_f1 = f1_scores.max()   # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
         tied_indices = np.flatnonzero(f1_scores == max_f1)
         optimal_threshold = thresholds[tied_indices[-1]]
+        print("Number of tied indices:")
+        print(len(tied_indices))
     else:      
         optimal_threshold = thresholds[np.argmax(f1_scores)] # Old incorrect threshold now just used for comparison
         
