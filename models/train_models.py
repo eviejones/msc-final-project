@@ -80,6 +80,8 @@ def shap_category(feature_name):
         return "Rainfall"
     if "price" in feature_name:
         return "Food Prices"
+    if "months_since" in feature_name:
+        return "Food Prices"
     return "Tabular ACLED Counts"
 
 

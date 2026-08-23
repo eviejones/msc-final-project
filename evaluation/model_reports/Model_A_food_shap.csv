@@ -1,0 +1,91 @@
+feature,mean_abs_shap,dataset,category
+rolling_mean_6m,0.21120265,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.110473365,train,Structural Baseline (Rolling Stats)
+rainfall_3m_anomaly,0.055783004,train,Rainfall
+armed_clash,0.047003325,train,Tabular ACLED Counts
+price_millet,0.04325517,train,Food Prices
+attack,0.04274824,train,Tabular ACLED Counts
+price_sorghum,0.03454148,train,Food Prices
+price_wheat_flour,0.023427539,train,Food Prices
+fatalities,0.023071999,train,Tabular ACLED Counts
+excessive_force_against_protesters,0.018686952,train,Tabular ACLED Counts
+months_since_reading_sorghum,0.017243134,train,Food Prices
+looting_property_destruction,0.016768511,train,Tabular ACLED Counts
+peaceful_protest,0.009503074,train,Tabular ACLED Counts
+months_since_reading_wheat_flour,0.0046922145,train,Food Prices
+change_to_group_activity,0.0028428994,train,Tabular ACLED Counts
+protest_with_intervention,0.0026777473,train,Tabular ACLED Counts
+months_since_reading_millet,0.002300257,train,Food Prices
+shelling_artillery_missile_attack,0.0014716695,train,Tabular ACLED Counts
+arrests,0.0014635233,train,Tabular ACLED Counts
+violent_demonstration,0.0010953113,train,Tabular ACLED Counts
+abduction_forced_disappearance,0.0010801761,train,Tabular ACLED Counts
+mob_violence,0.0007079246,train,Tabular ACLED Counts
+other,0.00047604105,train,Tabular ACLED Counts
+sexual_violence,0.0,train,Tabular ACLED Counts
+remote_explosive_landmine_ied,0.0,train,Tabular ACLED Counts
+agreement,0.0,train,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,train,Tabular ACLED Counts
+non_state_actor_overtakes_territory,0.0,train,Tabular ACLED Counts
+headquarters_or_base_established,0.0,train,Tabular ACLED Counts
+grenade,0.0,train,Tabular ACLED Counts
+rolling_mean_6m,0.20023467,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.16947603,onset,Structural Baseline (Rolling Stats)
+armed_clash,0.05285477,onset,Tabular ACLED Counts
+rainfall_3m_anomaly,0.04965112,onset,Rainfall
+attack,0.03871041,onset,Tabular ACLED Counts
+price_millet,0.03728211,onset,Food Prices
+looting_property_destruction,0.031380154,onset,Tabular ACLED Counts
+price_wheat_flour,0.026567135,onset,Food Prices
+fatalities,0.023012696,onset,Tabular ACLED Counts
+price_sorghum,0.021385942,onset,Food Prices
+months_since_reading_sorghum,0.017442754,onset,Food Prices
+change_to_group_activity,0.0150129795,onset,Tabular ACLED Counts
+excessive_force_against_protesters,0.0100653805,onset,Tabular ACLED Counts
+peaceful_protest,0.0076266704,onset,Tabular ACLED Counts
+months_since_reading_wheat_flour,0.0053453636,onset,Food Prices
+shelling_artillery_missile_attack,0.0042803744,onset,Tabular ACLED Counts
+abduction_forced_disappearance,0.00246105,onset,Tabular ACLED Counts
+arrests,0.002284535,onset,Tabular ACLED Counts
+months_since_reading_millet,0.0022656815,onset,Food Prices
+protest_with_intervention,0.0017249977,onset,Tabular ACLED Counts
+violent_demonstration,0.001323322,onset,Tabular ACLED Counts
+other,0.0012326615,onset,Tabular ACLED Counts
+mob_violence,0.0007106621,onset,Tabular ACLED Counts
+government_regains_territory,0.0,onset,Tabular ACLED Counts
+air_drone_strike,0.0,onset,Tabular ACLED Counts
+chemical_weapon,0.0,onset,Tabular ACLED Counts
+disrupted_weapons_use,0.0,onset,Tabular ACLED Counts
+agreement,0.0,onset,Tabular ACLED Counts
+grenade,0.0,onset,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,onset,Tabular ACLED Counts
+rolling_std_6m,0.22535485,active,Structural Baseline (Rolling Stats)
+rolling_mean_6m,0.19045211,active,Structural Baseline (Rolling Stats)
+rainfall_3m_anomaly,0.05986641,active,Rainfall
+armed_clash,0.046501808,active,Tabular ACLED Counts
+attack,0.03682255,active,Tabular ACLED Counts
+price_millet,0.033856798,active,Food Prices
+looting_property_destruction,0.030120103,active,Tabular ACLED Counts
+fatalities,0.023568774,active,Tabular ACLED Counts
+change_to_group_activity,0.020991137,active,Tabular ACLED Counts
+months_since_reading_sorghum,0.013626065,active,Food Prices
+price_wheat_flour,0.012994728,active,Food Prices
+price_sorghum,0.009872756,active,Food Prices
+shelling_artillery_missile_attack,0.008054971,active,Tabular ACLED Counts
+peaceful_protest,0.0058499803,active,Tabular ACLED Counts
+months_since_reading_wheat_flour,0.0054572043,active,Food Prices
+excessive_force_against_protesters,0.0047548674,active,Tabular ACLED Counts
+abduction_forced_disappearance,0.004375781,active,Tabular ACLED Counts
+months_since_reading_millet,0.0019663572,active,Food Prices
+arrests,0.0017116077,active,Tabular ACLED Counts
+other,0.0011522325,active,Tabular ACLED Counts
+protest_with_intervention,0.0010532354,active,Tabular ACLED Counts
+violent_demonstration,0.0008734316,active,Tabular ACLED Counts
+mob_violence,0.0005815804,active,Tabular ACLED Counts
+government_regains_territory,0.0,active,Tabular ACLED Counts
+air_drone_strike,0.0,active,Tabular ACLED Counts
+chemical_weapon,0.0,active,Tabular ACLED Counts
+disrupted_weapons_use,0.0,active,Tabular ACLED Counts
+agreement,0.0,active,Tabular ACLED Counts
+grenade,0.0,active,Tabular ACLED Counts
+non_violent_transfer_of_territory,0.0,active,Tabular ACLED Counts

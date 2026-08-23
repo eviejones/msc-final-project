@@ -1,0 +1,91 @@
+feature,mean_abs_shap,dataset,category
+rolling_mean_6m,0.20593758,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.117417865,train,Structural Baseline (Rolling Stats)
+rainfall_3m_anomaly,0.04653936,train,Rainfall
+emb_227,0.04215231,train,Text Embeddings
+emb_263,0.036914844,train,Text Embeddings
+emb_657,0.035842698,train,Text Embeddings
+emb_348,0.025760075,train,Text Embeddings
+price_sorghum,0.025154596,train,Food Prices
+price_millet,0.021224773,train,Food Prices
+emb_210,0.019737313,train,Text Embeddings
+emb_148,0.019397644,train,Text Embeddings
+emb_141,0.016634488,train,Text Embeddings
+strategic_developments,0.014715232,train,Tabular ACLED Counts
+emb_144,0.014120319,train,Text Embeddings
+emb_512,0.012360104,train,Text Embeddings
+protests,0.0119154025,train,Tabular ACLED Counts
+emb_437,0.011745489,train,Text Embeddings
+emb_767,0.0105997985,train,Text Embeddings
+emb_586,0.010566192,train,Text Embeddings
+emb_325,0.009817771,train,Text Embeddings
+emb_576,0.009277434,train,Text Embeddings
+price_wheat_flour,0.008737879,train,Food Prices
+emb_355,0.008630727,train,Text Embeddings
+emb_489,0.008490987,train,Text Embeddings
+emb_281,0.008437668,train,Text Embeddings
+emb_326,0.008351982,train,Text Embeddings
+emb_222,0.008312751,train,Text Embeddings
+emb_153,0.008112175,train,Text Embeddings
+emb_24,0.007951808,train,Text Embeddings
+emb_717,0.0074511864,train,Text Embeddings
+rolling_mean_6m,0.16451599,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.12580362,onset,Structural Baseline (Rolling Stats)
+emb_227,0.0396574,onset,Text Embeddings
+emb_263,0.03875027,onset,Text Embeddings
+strategic_developments,0.0350859,onset,Tabular ACLED Counts
+emb_437,0.033185605,onset,Text Embeddings
+rainfall_3m_anomaly,0.032215003,onset,Rainfall
+emb_657,0.024462486,onset,Text Embeddings
+emb_148,0.023823062,onset,Text Embeddings
+emb_348,0.022906797,onset,Text Embeddings
+emb_210,0.017883182,onset,Text Embeddings
+emb_141,0.014970331,onset,Text Embeddings
+price_wheat_flour,0.01493955,onset,Food Prices
+emb_144,0.014182528,onset,Text Embeddings
+emb_767,0.012992312,onset,Text Embeddings
+emb_24,0.012670696,onset,Text Embeddings
+emb_222,0.01010354,onset,Text Embeddings
+emb_512,0.0100773135,onset,Text Embeddings
+emb_325,0.010060186,onset,Text Embeddings
+emb_281,0.009467204,onset,Text Embeddings
+emb_54,0.0093040345,onset,Text Embeddings
+protests,0.00925154,onset,Tabular ACLED Counts
+emb_239,0.009244333,onset,Text Embeddings
+price_millet,0.009207164,onset,Food Prices
+emb_533,0.009155244,onset,Text Embeddings
+emb_630,0.009143789,onset,Text Embeddings
+emb_586,0.009092941,onset,Text Embeddings
+emb_238,0.008320394,onset,Text Embeddings
+emb_489,0.008188358,onset,Text Embeddings
+emb_355,0.008063109,onset,Text Embeddings
+rolling_mean_6m,0.1344706,active,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.11691827,active,Structural Baseline (Rolling Stats)
+emb_437,0.05403283,active,Text Embeddings
+emb_227,0.042453647,active,Text Embeddings
+emb_263,0.03905844,active,Text Embeddings
+strategic_developments,0.038820513,active,Tabular ACLED Counts
+rainfall_3m_anomaly,0.034199066,active,Rainfall
+emb_148,0.028390788,active,Text Embeddings
+emb_348,0.023280585,active,Text Embeddings
+emb_210,0.017617388,active,Text Embeddings
+emb_657,0.01714792,active,Text Embeddings
+emb_533,0.015909407,active,Text Embeddings
+emb_24,0.0140386885,active,Text Embeddings
+price_millet,0.014023771,active,Food Prices
+emb_141,0.014002221,active,Text Embeddings
+emb_144,0.013972194,active,Text Embeddings
+emb_238,0.013493824,active,Text Embeddings
+emb_767,0.012956961,active,Text Embeddings
+price_wheat_flour,0.012124493,active,Food Prices
+emb_153,0.011265401,active,Text Embeddings
+emb_239,0.011020584,active,Text Embeddings
+emb_54,0.010630875,active,Text Embeddings
+emb_741,0.0103428075,active,Text Embeddings
+emb_222,0.00997703,active,Text Embeddings
+emb_375,0.00955459,active,Text Embeddings
+emb_576,0.009451191,active,Text Embeddings
+emb_281,0.009206413,active,Text Embeddings
+emb_193,0.009168795,active,Text Embeddings
+emb_325,0.008977345,active,Text Embeddings
+emb_512,0.008648732,active,Text Embeddings

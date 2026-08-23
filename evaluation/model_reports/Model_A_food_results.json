@@ -1,0 +1,14 @@
+{
+  "optimal_threshold": "0.4609",
+  "n_predictors": 34,
+  "train_cv_aupr": "0.2246",
+  "train_cv_f1": "0.3231",
+  "onset_aupr": "0.3349",
+  "onset_precision_class1": "0.2958",
+  "onset_recall_class1": "0.4286",
+  "onset_f1_class1": "0.3500",
+  "active_aupr": "0.1953",
+  "active_precision_class1": "0.2273",
+  "active_recall_class1": "0.3448",
+  "active_f1_class1": "0.2740"
+}

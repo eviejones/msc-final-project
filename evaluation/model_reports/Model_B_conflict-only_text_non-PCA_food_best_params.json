@@ -1,0 +1,16 @@
+{
+  "max_depth": 7,
+  "min_child_weight": 1,
+  "max_delta_step": 5,
+  "gamma": 0,
+  "learning_rate": 0.01,
+  "subsample": 1.0,
+  "colsample_bytree": 0.8,
+  "reg_alpha": 0.1,
+  "reg_lambda": 10,
+  "colsample_bylevel": 0.6,
+  "k": 1.75,
+  "event_col": "event_type",
+  "n_splits": 5,
+  "use_pca": false
+}
