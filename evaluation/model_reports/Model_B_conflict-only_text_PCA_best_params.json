@@ -1,16 +1,17 @@
 {
   "max_depth": 7,
   "min_child_weight": 1,
-  "max_delta_step": 0,
-  "gamma": 3,
+  "max_delta_step": 5,
+  "gamma": 0,
   "learning_rate": 0.01,
-  "subsample": 1.0,
-  "colsample_bytree": 1.0,
-  "reg_alpha": 2.0,
+  "subsample": 0.8,
+  "colsample_bytree": 0.8,
+  "reg_alpha": 0.0,
   "reg_lambda": 10,
-  "colsample_bylevel": 0.8,
+  "colsample_bylevel": 0.6,
   "k": 1.75,
   "event_col": "sub_event_type",
   "n_splits": 5,
-  "use_pca": true
+  "use_pca": true,
+  "price_recency": true
 }

@@ -1,91 +1,91 @@
 feature,mean_abs_shap,dataset,category
-rolling_mean_6m,0.18828164,train,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.05237745,train,Structural Baseline (Rolling Stats)
-emb_709,0.017605243,train,Text Embeddings
-emb_306,0.014611117,train,Text Embeddings
-emb_655,0.014592726,train,Text Embeddings
-emb_122,0.013328699,train,Text Embeddings
-emb_36,0.012973722,train,Text Embeddings
-emb_596,0.011891265,train,Text Embeddings
-emb_657,0.011593585,train,Text Embeddings
-emb_289,0.011283587,train,Text Embeddings
-emb_584,0.010690268,train,Text Embeddings
-rainfall_3m_anomaly,0.010165348,train,Rainfall
-emb_740,0.009636475,train,Text Embeddings
-emb_690,0.009604343,train,Text Embeddings
-emb_109,0.008665469,train,Text Embeddings
-emb_544,0.008494441,train,Text Embeddings
-emb_311,0.00819991,train,Text Embeddings
-emb_548,0.007874884,train,Text Embeddings
-emb_263,0.007422864,train,Text Embeddings
-emb_370,0.007212753,train,Text Embeddings
-emb_255,0.007132813,train,Text Embeddings
-emb_679,0.0070625204,train,Text Embeddings
-emb_355,0.0070035453,train,Text Embeddings
-emb_555,0.0069579137,train,Text Embeddings
-price_millet,0.006892084,train,Food Prices
-emb_437,0.0067123272,train,Text Embeddings
-emb_746,0.006599456,train,Text Embeddings
-emb_331,0.0065162363,train,Text Embeddings
-emb_541,0.0063998583,train,Text Embeddings
-emb_84,0.0063956054,train,Text Embeddings
-rolling_mean_6m,0.14398097,onset,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.06622069,onset,Structural Baseline (Rolling Stats)
-emb_655,0.026180549,onset,Text Embeddings
-emb_740,0.020222185,onset,Text Embeddings
-emb_709,0.017874967,onset,Text Embeddings
-emb_289,0.014597898,onset,Text Embeddings
-emb_306,0.013873047,onset,Text Embeddings
-emb_657,0.011943734,onset,Text Embeddings
-emb_690,0.0118353795,onset,Text Embeddings
-emb_665,0.011719547,onset,Text Embeddings
-emb_596,0.011175142,onset,Text Embeddings
-emb_584,0.010815247,onset,Text Embeddings
-emb_555,0.010453596,onset,Text Embeddings
-emb_36,0.010345126,onset,Text Embeddings
-emb_355,0.008917211,onset,Text Embeddings
-emb_122,0.008598864,onset,Text Embeddings
-emb_255,0.00855398,onset,Text Embeddings
-emb_548,0.008460581,onset,Text Embeddings
-emb_263,0.0080855,onset,Text Embeddings
-emb_375,0.008038,onset,Text Embeddings
-emb_311,0.0077568283,onset,Text Embeddings
-emb_62,0.007740077,onset,Text Embeddings
-emb_109,0.0072455653,onset,Text Embeddings
-emb_609,0.0072253398,onset,Text Embeddings
-emb_65,0.007190007,onset,Text Embeddings
-emb_41,0.0067615667,onset,Text Embeddings
-emb_105,0.0064690937,onset,Text Embeddings
-emb_437,0.006365875,onset,Text Embeddings
-emb_331,0.0063173384,onset,Text Embeddings
-price_wheat_flour,0.0062507982,onset,Food Prices
-rolling_mean_6m,0.13203065,active,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.07690353,active,Structural Baseline (Rolling Stats)
-emb_655,0.026975928,active,Text Embeddings
-emb_740,0.020286152,active,Text Embeddings
-emb_289,0.016708903,active,Text Embeddings
-emb_709,0.014390602,active,Text Embeddings
-emb_306,0.013545131,active,Text Embeddings
-emb_665,0.012177891,active,Text Embeddings
-emb_36,0.011787262,active,Text Embeddings
-emb_690,0.011768067,active,Text Embeddings
-emb_555,0.011603655,active,Text Embeddings
-emb_657,0.011514978,active,Text Embeddings
-emb_62,0.010788762,active,Text Embeddings
-emb_548,0.010252576,active,Text Embeddings
-emb_311,0.009944514,active,Text Embeddings
-emb_584,0.00984127,active,Text Embeddings
-emb_609,0.009793573,active,Text Embeddings
-rainfall_3m_anomaly,0.009741694,active,Rainfall
-emb_596,0.0090121515,active,Text Embeddings
-emb_355,0.008780243,active,Text Embeddings
-emb_581,0.008685814,active,Text Embeddings
-emb_65,0.008424959,active,Text Embeddings
-emb_375,0.008105741,active,Text Embeddings
-emb_255,0.008045782,active,Text Embeddings
-emb_222,0.0075974558,active,Text Embeddings
-emb_263,0.007583883,active,Text Embeddings
-emb_735,0.0075450954,active,Text Embeddings
-emb_122,0.0073529454,active,Text Embeddings
-emb_464,0.0073200543,active,Text Embeddings
-price_wheat_flour,0.006723445,active,Food Prices
+rolling_mean_6m,0.22409189,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.068164974,train,Structural Baseline (Rolling Stats)
+emb_657,0.04162239,train,Text Embeddings
+emb_306,0.02529944,train,Text Embeddings
+emb_655,0.024124777,train,Text Embeddings
+emb_709,0.019286918,train,Text Embeddings
+emb_555,0.015090056,train,Text Embeddings
+emb_289,0.011282708,train,Text Embeddings
+emb_544,0.011189979,train,Text Embeddings
+emb_294,0.010858626,train,Text Embeddings
+emb_62,0.010419415,train,Text Embeddings
+emb_355,0.009779718,train,Text Embeddings
+emb_746,0.00943746,train,Text Embeddings
+emb_643,0.009319386,train,Text Embeddings
+emb_690,0.008872757,train,Text Embeddings
+emb_84,0.008774049,train,Text Embeddings
+emb_457,0.008056139,train,Text Embeddings
+emb_584,0.008053769,train,Text Embeddings
+emb_370,0.007935379,train,Text Embeddings
+emb_160,0.00790005,train,Text Embeddings
+emb_665,0.007834398,train,Text Embeddings
+emb_310,0.007494821,train,Text Embeddings
+emb_295,0.0074187517,train,Text Embeddings
+emb_122,0.006900951,train,Text Embeddings
+emb_740,0.0067672613,train,Text Embeddings
+price_millet,0.0067254924,train,Food Prices
+emb_757,0.0067061475,train,Text Embeddings
+emb_744,0.006646667,train,Text Embeddings
+emb_81,0.0065971776,train,Text Embeddings
+emb_2,0.006529654,train,Text Embeddings
+rolling_mean_6m,0.16368951,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.07914395,onset,Structural Baseline (Rolling Stats)
+emb_655,0.0337388,onset,Text Embeddings
+emb_657,0.02880733,onset,Text Embeddings
+emb_555,0.020468967,onset,Text Embeddings
+emb_306,0.01997251,onset,Text Embeddings
+emb_757,0.018934643,onset,Text Embeddings
+emb_665,0.017523715,onset,Text Embeddings
+emb_709,0.016716663,onset,Text Embeddings
+emb_160,0.016528921,onset,Text Embeddings
+emb_289,0.013140529,onset,Text Embeddings
+emb_355,0.012305307,onset,Text Embeddings
+emb_740,0.01164699,onset,Text Embeddings
+emb_62,0.011091598,onset,Text Embeddings
+emb_457,0.01055961,onset,Text Embeddings
+emb_442,0.0104796635,onset,Text Embeddings
+emb_690,0.00936109,onset,Text Embeddings
+emb_746,0.009222924,onset,Text Embeddings
+emb_584,0.009094784,onset,Text Embeddings
+emb_294,0.009039367,onset,Text Embeddings
+emb_456,0.008417206,onset,Text Embeddings
+emb_2,0.008352015,onset,Text Embeddings
+looting_property_destruction,0.007840698,onset,Tabular ACLED Counts
+emb_586,0.0074324748,onset,Text Embeddings
+emb_331,0.0070855767,onset,Text Embeddings
+emb_310,0.0070736413,onset,Text Embeddings
+emb_65,0.007037482,onset,Text Embeddings
+emb_544,0.007012993,onset,Text Embeddings
+emb_44,0.006786094,onset,Text Embeddings
+emb_744,0.0063927225,onset,Text Embeddings
+rolling_mean_6m,0.14121212,active,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.08824329,active,Structural Baseline (Rolling Stats)
+emb_655,0.031382613,active,Text Embeddings
+emb_657,0.027365064,active,Text Embeddings
+emb_757,0.027212575,active,Text Embeddings
+emb_555,0.021691725,active,Text Embeddings
+emb_665,0.019858828,active,Text Embeddings
+emb_306,0.018982314,active,Text Embeddings
+emb_160,0.018952087,active,Text Embeddings
+emb_709,0.013870138,active,Text Embeddings
+emb_355,0.01247821,active,Text Embeddings
+emb_289,0.012106396,active,Text Embeddings
+emb_456,0.011684123,active,Text Embeddings
+emb_442,0.011394613,active,Text Embeddings
+emb_740,0.0108280545,active,Text Embeddings
+emb_44,0.010494761,active,Text Embeddings
+emb_457,0.010029046,active,Text Embeddings
+emb_62,0.009473871,active,Text Embeddings
+emb_690,0.008915023,active,Text Embeddings
+emb_586,0.008664932,active,Text Embeddings
+emb_584,0.008579038,active,Text Embeddings
+looting_property_destruction,0.008158487,active,Tabular ACLED Counts
+emb_744,0.008081432,active,Text Embeddings
+emb_746,0.008064561,active,Text Embeddings
+emb_459,0.008039248,active,Text Embeddings
+emb_2,0.0071350373,active,Text Embeddings
+rainfall_3m_anomaly,0.0068758167,active,Rainfall
+emb_544,0.006714525,active,Text Embeddings
+emb_478,0.0066915248,active,Text Embeddings
+emb_392,0.0066471375,active,Text Embeddings

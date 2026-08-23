@@ -1,14 +1,14 @@
 {
-  "optimal_threshold": "0.4151",
-  "n_predictors": 782,
-  "train_cv_aupr": "0.1908",
-  "train_cv_f1": "0.2685",
-  "onset_aupr": "0.3624",
-  "onset_precision_class1": "0.3010",
-  "onset_recall_class1": "0.6327",
-  "onset_f1_class1": "0.4079",
-  "active_aupr": "0.1733",
-  "active_precision_class1": "0.1436",
-  "active_recall_class1": "0.4655",
-  "active_f1_class1": "0.2195"
+  "optimal_threshold": "0.3819",
+  "n_predictors": 803,
+  "train_cv_aupr": "0.1942",
+  "train_cv_f1": "0.2848",
+  "onset_aupr": "0.3713",
+  "onset_precision_class1": "0.2398",
+  "onset_recall_class1": "0.8367",
+  "onset_f1_class1": "0.3727",
+  "active_aupr": "0.1718",
+  "active_precision_class1": "0.1411",
+  "active_recall_class1": "0.9655",
+  "active_f1_class1": "0.2462"
 }

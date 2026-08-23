@@ -1,16 +1,17 @@
 {
-  "max_depth": 7,
+  "max_depth": 3,
   "min_child_weight": 1,
   "max_delta_step": 5,
-  "gamma": 0,
-  "learning_rate": 0.01,
-  "subsample": 1.0,
-  "colsample_bytree": 0.8,
-  "reg_alpha": 0.1,
+  "gamma": 1,
+  "learning_rate": 0.03,
+  "subsample": 0.6,
+  "colsample_bytree": 0.6,
+  "reg_alpha": 2.0,
   "reg_lambda": 10,
-  "colsample_bylevel": 0.6,
+  "colsample_bylevel": 0.8,
   "k": 1.75,
-  "event_col": "event_type",
+  "event_col": "sub_event_type",
   "n_splits": 5,
-  "use_pca": false
+  "use_pca": false,
+  "price_recency": true
 }
