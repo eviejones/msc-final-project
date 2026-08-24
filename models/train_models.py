@@ -243,6 +243,7 @@ def train_evaluate_model(
             "remove_abyei",
             "use_pca",
             "price_recency",
+            "seed"
         ]
     }
 
@@ -270,7 +271,7 @@ def train_evaluate_model(
             cv=grouped_timeseries_cv,
             scoring="average_precision",
             n_jobs=-1,
-            random_state=23,
+            random_state=params.get("seed", 23),
         )
 
         random_search.fit(X_train, y_train)
