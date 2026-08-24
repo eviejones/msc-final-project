@@ -101,6 +101,7 @@ def read_model_reports(files):
             - all_onset (pd.DataFrame): Concatenated onset predictions across all models.
     """
     result_list = []
+    params_list = []
     shap_list = []
     onset_list = []
 
@@ -108,15 +109,17 @@ def read_model_reports(files):
         result, best_params, shap_importance, onset_predictions = open_model_report(f)
 
         model_name = result["model"].iloc[0]
-
+        best_params["model"] = model_name
         shap_importance["model"] = model_name
         onset_predictions["model"] = model_name
 
         result_list.append(result)
+        params_list.append(best_params)
         shap_list.append(shap_importance)
         onset_list.append(onset_predictions)
 
     all_results = pd.concat(result_list)
+    all_best_params = pd.concat(params_list)
     all_shap = pd.concat(shap_list)
     all_onset = pd.concat(onset_list)
 
@@ -125,4 +128,4 @@ def read_model_reports(files):
     )
     df_melted["score"] = pd.to_numeric(df_melted["score"], errors="coerce")
 
-    return df_melted, all_shap, all_onset
+    return df_melted, all_best_params, all_shap, all_onset

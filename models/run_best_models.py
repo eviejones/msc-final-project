@@ -3,8 +3,8 @@
 from pathlib import Path
 
 import pandas as pd
-from train_models import train_evaluate_model
 
+from models.train_models import train_evaluate_model
 from utils.constants import COUNTRY
 from utils.data_prep import get_clean_combined_data
 from utils.logger import get_logger
@@ -15,17 +15,6 @@ reports_dir = Path(REPORTS_DIR)
 reports_dir.mkdir(parents=True, exist_ok=True)
 
 logger = get_logger("Run best models")
-
-# The set config comes from the decisions made in results
-SET_CONFIG = {
-    "k": 1.75,
-    "threshold_fix_applied": True,
-    "price_recency": True,
-    "event_col": "sub_event_type",
-    "include_food": True,
-    "include_rain": True,
-    "n_splits": 5,
-}
 
 
 def get_best_params_from_results(all_results, config):
@@ -178,14 +167,14 @@ def model_report(label, config, params):
     return results, best_params, shap_importance, onset_predictions, comparison_row
 
 
-def main():
+def run_best_models(set_confg):
     """Executes the reporting pipeline for all Part 2 final model configurations."""
 
     all_results = pd.read_csv(f"evaluation/{COUNTRY.lower()}_results.csv")
 
     # ---- Model A - Structural only
     model_a_config = {
-        **SET_CONFIG,
+        **set_confg,
         "include_text": False,
         "conflict_only_embeddings": False,
         "use_pca": False,
@@ -198,7 +187,7 @@ def main():
 
     # ---- Model B - conflict-only text, PCA
     model_b_conflict_pca_config = {
-        **SET_CONFIG,
+        **set_confg,
         "include_text": True,
         "conflict_only_embeddings": True,
         "use_pca": True,
@@ -227,7 +216,7 @@ def main():
 
     # ---- Model B - conflict-only text, non-PCA
     model_b_conflict_nopca_config = {
-        **SET_CONFIG,
+        **set_confg,
         "include_text": True,
         "conflict_only_embeddings": True,
         "use_pca": False,
@@ -256,7 +245,7 @@ def main():
 
     # ---- Model B - all-event text, non-PCA
     model_b_all_nopca_config = {
-        **SET_CONFIG,
+        **set_confg,
         "include_text": True,
         "conflict_only_embeddings": False,
         "use_pca": False,
@@ -285,7 +274,7 @@ def main():
 
     # ---- Model B - all-event text, PCA
     model_b_all_pca_config = {
-        **SET_CONFIG,
+        **set_confg,
         "include_text": True,
         "conflict_only_embeddings": False,
         "use_pca": True,
@@ -495,4 +484,4 @@ def main():
 #         best_params_b_all_pca, shap_b_all_pca, onset_preds_b_all_pca)
 
 if __name__ == "__main__":
-    main()
+    run_best_models()
