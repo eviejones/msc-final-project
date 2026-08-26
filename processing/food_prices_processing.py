@@ -182,7 +182,7 @@ def process_and_pivot_food_prices(
 def get_clean_data(
     all_regions: np.ndarray | None = None,
     all_months: pd.PeriodIndex | None = None,
-    price_recency: bool = True,
+    price_recency: bool = True, #TODO remove
 ) -> tuple[pd.DataFrame, list[str]]:
     """An orchestrator function that runs the full food price data pipeline.
 

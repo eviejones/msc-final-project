@@ -95,7 +95,6 @@ def train_evaluate_model(
     compute_shap: bool = False,
     shap_sample_size: int | None = 2000,
     return_onset_predictions: bool = False,
-    threshold_fix: bool = True,
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
     """
     Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
@@ -307,20 +306,19 @@ def train_evaluate_model(
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
 
-    if threshold_fix:
-        max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
-        tied_indices = np.flatnonzero(f1_scores == max_f1)
-        optimal_threshold = thresholds[tied_indices[-1]]
-        print("Number of tied indices:")
-        print(len(tied_indices))
-    else:
-        optimal_threshold = thresholds[
-            np.argmax(f1_scores)
-        ]  # Old incorrect threshold now just used for comparison
-
+    max_f1 = f1_scores.max() # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
+    tied_indices = np.flatnonzero(f1_scores == max_f1)
+    optimal_threshold = thresholds[tied_indices[-1]]
+    
     # Evaluate on train
     train_cv_aupr = average_precision_score(oof_y_true, oof_y_proba)
     train_cv_f1 = max_f1
+    
+    # Calculate train precision and recall using out-of-fold predictions
+    oof_y_pred = (oof_y_proba >= optimal_threshold).astype(int)
+    train_report = classification_report(
+        oof_y_true, oof_y_pred, output_dict=True, zero_division=0
+    )
 
     # Evaluate on onset test set
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
@@ -345,14 +343,17 @@ def train_evaluate_model(
         y_active, y_pred_custom_active, output_dict=True, zero_division=0
     )
 
-    class_key = "1" if "1" in onset_report else 1
+    class_key = "1" if "1" in train_report else 1
 
     results = {
         "optimal_threshold": f"{optimal_threshold:.4f}",
         "n_predictors": len(final_predictor_cols),
         # Train Metrics
         "train_cv_aupr": f"{train_cv_aupr:.4f}",
+        "train_cv_precision_class1": f"{train_report[class_key]['precision']:.4f}",
+        "train_cv_recall_class1": f"{train_report[class_key]['recall']:.4f}",
         "train_cv_f1": f"{train_cv_f1:.4f}",
+        "train_prevalence_pct": f"{(y_train.sum() / len(y_train) * 100):.2f}",
         # Onset Metrics
         "onset_aupr": f"{average_precision_score(y_onset, y_pred_proba_onset):.4f}",
         "onset_precision_class1": f"{onset_report[class_key]['precision']:.4f}",
