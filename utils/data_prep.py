@@ -180,7 +180,7 @@ def get_clean_combined_data(
             processed_food_df, food_predictor_cols = food.get_clean_data(
                 all_regions=all_regions,
                 all_months=all_months,
-                price_recency=price_recency,
+                price_recency=price_recency, #TODO remove
             )
             combined_df = combined_df.merge(
                 processed_food_df, on=["region", "year_month"], how="left"

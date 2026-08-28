@@ -231,7 +231,9 @@ def check_reproducibility():
             "the other machine's output to look for a version difference."
         )
     else:
-        print("RESULT: All models reproduced within tolerance. This machine is consistent.")
+        print(
+            "RESULT: All models reproduced within tolerance. This machine is consistent."
+        )
     print("=" * 60)
 
 
