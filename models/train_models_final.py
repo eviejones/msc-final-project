@@ -270,7 +270,7 @@ def train_evaluate_model(
             cv=grouped_timeseries_cv,
             scoring="average_precision",
             n_jobs=-1,
-            random_state=params.get("seed", 23),
+            random_state=params.get("seed", 23), # Default to original seed if nothing passed
         )
 
         random_search.fit(X_train, y_train)
