@@ -71,7 +71,6 @@ def process_and_pivot_food_prices(
     df_prices: pd.DataFrame,
     all_regions: np.ndarray | None,
     all_months: pd.PeriodIndex | None,
-    price_recency: bool = False,
 ) -> pd.DataFrame:
     """Aggregates and pivots food price data to create time-series features.
 
@@ -87,13 +86,6 @@ def process_and_pivot_food_prices(
             Cartesian spine. If None, derived from `df_prices`.
         all_months (pd.PeriodIndex | None): Array of all target months for the
             Cartesian spine. If None, derived from `df_prices`.
-        price_recency (bool, optional): If True, adds a
-            'months_since_reading_{commodity}' column alongside each price
-            column, counting the number of months since the last genuine
-            (non-forward-filled) reading. Leading gaps (no reading ever
-            recorded) are left as NaN in both price and staleness columns,
-            consistent with how leading gaps are handled elsewhere, for
-            XGBoost's native missing-value handling. Defaults to False.
 
     Returns:
         pd.DataFrame: A continuous time-series DataFrame indexed by region
@@ -123,8 +115,7 @@ def process_and_pivot_food_prices(
         .sort_values(["region", "commodity", "year_month"])
     )
 
-    if price_recency:
-        df_expanded["is_actual_reading"] = df_expanded["usdprice_per_kg"].notna()
+    df_expanded["is_actual_reading"] = df_expanded["usdprice_per_kg"].notna()
 
     df_expanded["usdprice_per_kg"] = df_expanded.groupby(["region", "commodity"])[
         "usdprice_per_kg"
@@ -132,22 +123,19 @@ def process_and_pivot_food_prices(
         lambda x: x.ffill()
     )  # Forward fill on food data as we can assume that prices remain the same
 
-    if price_recency:
+    def months_since_last_reading(s: pd.Series) -> pd.Series:
+        """Calculates the number of months since last readin."""
+        group_id = s.cumsum()
+        counts = s.groupby(group_id).cumcount()
+        counts = counts.where(group_id > 0, other=np.nan)
+        return counts
 
-        def months_since_last_reading(s: pd.Series) -> pd.Series:
-            """Calculates the number of months since last readin."""
-            group_id = s.cumsum()
-            counts = s.groupby(group_id).cumcount()
-            counts = counts.where(group_id > 0, other=np.nan)
-            return counts
-
-        df_expanded["months_since_reading"] = df_expanded.groupby(
-            ["region", "commodity"]
-        )["is_actual_reading"].transform(months_since_last_reading)
+    df_expanded["months_since_reading"] = df_expanded.groupby(
+        ["region", "commodity"]
+    )["is_actual_reading"].transform(months_since_last_reading)
 
     value_cols = ["usdprice_per_kg"]
-    if price_recency:
-        value_cols.append("months_since_reading")
+    value_cols.append("months_since_reading")
 
     df_pivoted = df_expanded.pivot(
         index=["region", "year_month"],
@@ -182,7 +170,6 @@ def process_and_pivot_food_prices(
 def get_clean_data(
     all_regions: np.ndarray | None = None,
     all_months: pd.PeriodIndex | None = None,
-    price_recency: bool = True, #TODO remove
 ) -> tuple[pd.DataFrame, list[str]]:
     """An orchestrator function that runs the full food price data pipeline.
 
@@ -196,9 +183,6 @@ def get_clean_data(
             for the Cartesian spine. Defaults to None.
         all_months (pd.PeriodIndex | None, optional): Array of all target
             months for the Cartesian spine. Defaults to None.
-        price_recency (bool, optional): If True, adds a
-            months-since-last-reading feature per commodity alongside price.
-            Defaults to False, preserving the original pipeline's behaviour.
 
     Returns:
         tuple[pd.DataFrame, list[str]]: A tuple containing:
@@ -209,7 +193,7 @@ def get_clean_data(
     """
     food_prices_df = read_food_prices(all_regions)
     pivoted_df = process_and_pivot_food_prices(
-        food_prices_df, all_regions, all_months, price_recency
+        food_prices_df, all_regions, all_months
     )
 
     predictor_cols = [
