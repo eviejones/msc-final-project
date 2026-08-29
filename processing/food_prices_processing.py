@@ -5,7 +5,7 @@ from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY, PRIMARY_COMMODITIES, TRAIN_START_DATE
 from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
-from utils.name_mapping import build_state_name_map
+from utils.name_mapping import build_region_name_map
 
 logger = get_logger("WFP Processing")
 
@@ -24,7 +24,7 @@ def read_food_prices(all_regions: np.ndarray | None = None) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: A cleaned DataFrame containing historical retail prices for
-            specific commodities, with standardised state names, temporal periods,
+            specific commodities, with standardised region names, temporal periods,
             and calculated 'usdprice_per_kg'.
     """
     hdx = HdxClient()
@@ -48,7 +48,7 @@ def read_food_prices(all_regions: np.ndarray | None = None) -> pd.DataFrame:
     ].copy()
 
     renamed_df = df_filtered_cols.copy()
-    name_map = build_state_name_map(df_filtered_cols["admin1"], all_regions)
+    name_map = build_region_name_map(df_filtered_cols["admin1"], all_regions)
     renamed_df["admin1"] = df_filtered_cols["admin1"].map(name_map)
     renamed_df["date"] = pd.to_datetime(renamed_df["date"])
     renamed_df["year_month"] = renamed_df["date"].dt.to_period("M")

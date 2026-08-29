@@ -12,7 +12,7 @@ logger = get_logger("Name mapping")
 FUZZY_MATCH_CUTOFF = 0.8
 
 # As Sudan has been the focus of this project, the region name differences have been manually added. For other countries, fuzzy matching can be used.
-STATE_NAME_OVERRIDES = {
+REGION_NAME_OVERRIDES = {
     "Sudan": {
         "Al Gezira": "Al Jazirah",
         "Nile": "River Nile",
@@ -23,7 +23,7 @@ STATE_NAME_OVERRIDES = {
 }
 
 
-def clean_state_names(value: str, canonical_names=None) -> str:
+def clean_region_names(value: str, canonical_names=None) -> str:
     """
     Maps a raw admin1 name to its canonical form for the current COUNTRY.
 
@@ -33,7 +33,7 @@ def clean_state_names(value: str, canonical_names=None) -> str:
     if pd.isna(value):
         return value
 
-    overrides = STATE_NAME_OVERRIDES.get(COUNTRY, {})
+    overrides = REGION_NAME_OVERRIDES.get(COUNTRY, {})
     if value in overrides:
         mapped = overrides[value]
         logger.info(f"Renamed region '{value}' to '{mapped}' (manual override)")
@@ -54,10 +54,10 @@ def clean_state_names(value: str, canonical_names=None) -> str:
     return value
 
 
-def build_state_name_map(values, canonical_names=None) -> dict:
+def build_region_name_map(values, canonical_names=None) -> dict:
     """Resolves each distinct raw region name once, so renames are logged once."""
     return {
-        value: clean_state_names(value, canonical_names)
+        value: clean_region_names(value, canonical_names)
         for value in pd.unique(values)
         if pd.notna(value)
     }

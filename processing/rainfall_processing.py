@@ -5,7 +5,7 @@ from ingest.hdx_client import HdxClient
 from utils.constants import COUNTRY, TRAIN_START_DATE
 from utils.dates import WARMUP_START_DATE_1_MONTH, get_padded_index
 from utils.logger import get_logger
-from utils.name_mapping import build_state_name_map, get_iso3, pcode_mapping
+from utils.name_mapping import build_region_name_map, get_iso3, pcode_mapping
 
 logger = get_logger("Rainfall Processing")
 
@@ -37,7 +37,7 @@ def read_rainfall(all_regions: np.ndarray | None = None) -> pd.DataFrame:
     )
     rainfall_admin1 = rainfall[rainfall["adm_level"] == 1].copy()
     mapped_regions = rainfall_admin1["PCODE"].map(pcodes)
-    name_map = build_state_name_map(mapped_regions, all_regions)
+    name_map = build_region_name_map(mapped_regions, all_regions)
     rainfall_admin1["region"] = mapped_regions.map(name_map)
     logger.info("Rainfall PCODEs mapped to regions.")
 
