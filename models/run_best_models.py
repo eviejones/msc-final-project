@@ -167,7 +167,7 @@ def model_report(label, config, params):
 
 
 def run_best_models(set_confg):
-    """Executes the reporting pipeline for all Part 2 final model configurations."""
+    """Executes the reporting pipeline for all Part 2 (see methodology notebook) final model configurations."""
 
     all_results = pd.read_csv(f"evaluation/{COUNTRY.lower()}_results.csv")
 
