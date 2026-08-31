@@ -40,7 +40,7 @@ class HdxClient:
             file_name (str): The name of the resource file to look for within
                 the dataset.
             file_type (str): The file extension/format to match (e.g. "shp").
-
+`
         Returns:
             gpd.GeoDataFrame | None: The admin boundaries as a GeoDataFrame, or
                 None if the dataset or a matching resource could not be found.
