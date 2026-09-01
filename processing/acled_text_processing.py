@@ -119,62 +119,15 @@ def get_embedding(
     return outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
 
 
-# def get_monthly_regional_embeddings(
-#     df: pd.DataFrame, tokenizer: PreTrainedTokenizer, model: PreTrainedModel
-# ) -> pd.DataFrame:
-#     """
-#     Calculates document embeddings and aggregates them by region ('admin1') and month.
-#     """
-#     padded_start = pd.Period(WARMUP_START_DATE_1_MONTH, freq="M")
-
-#     df = df.copy()
-#     if not isinstance(df["year_month"].dtype, pd.PeriodDtype):
-#         df["year_month"] = pd.to_datetime(df["year_month"]).dt.to_period("M")
-
-#     df_filtered = df[
-#         (df["year_month"] >= padded_start)
-#         & (df["year_month"] <= pd.Period(END_DATE, freq="M"))
-#     ].copy()
-
-#     logger.warning(
-#         f"Calculating embeddings for {len(df_filtered)} rows. This might take a while."
-#     )
-
-#     tqdm.pandas(desc="Generating embeddings")
-#     df_filtered["notes_embeddings"] = df_filtered["notes_cleaned"].progress_apply(
-#         get_embedding, args=(tokenizer, model)
-#     )
-
-#     embedding_cols = pd.DataFrame(
-#         df_filtered["notes_embeddings"].tolist(), index=df_filtered.index
-#     )
-#     embedding_cols.columns = [f"emb_{i}" for i in range(embedding_cols.shape[1])]
-
-#     df_expanded = pd.concat(
-#         [df_filtered[["admin1", "year_month"]], embedding_cols], axis=1
-#     )
-#     df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
-
-#     # Group by region and month, then average the embeddings
-#     monthly_region_embeddings = (
-#         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
-#     )
-
-#     monthly_region_embeddings = monthly_region_embeddings.rename(
-#         columns={"admin1": "region"}
-#     )
-
-#     return monthly_region_embeddings
-
-
-## TODO clean !!
 def get_monthly_regional_embeddings(
     df: pd.DataFrame,
     tokenizer: PreTrainedTokenizer,
     model: PreTrainedModel,
-    batch_size: int = 64,  # Bumped to 64 for your M5 Max!
+    batch_size: int = 64,
 ) -> pd.DataFrame:
     """Calculates document embeddings in batches and aggregates them by region ('admin1') and month.
+
+    AI was used to process embeddings in batches after local machine crashing.
 
     Args:
         df (pd.DataFrame): DataFrame containing 'notes_cleaned', 'admin1', and
@@ -205,13 +158,11 @@ def get_monthly_regional_embeddings(
     texts = df_filtered["notes_cleaned"].fillna("").astype(str).tolist()
     all_embeddings = []
 
-    # MAcbook assignment
-    if torch.backends.mps.is_available():
+    if torch.backends.mps.is_available():  # Use Macbook memory
         device = torch.device("mps")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda")
     else:
         device = torch.device("cpu")
+        batch_size = 8  # Smaller batch size if just using cpu like on Windows
 
     model.to(device)
     model.eval()
@@ -247,7 +198,7 @@ def get_monthly_regional_embeddings(
     )
     df_expanded = df_expanded.loc[:, ~df_expanded.columns.duplicated(keep="first")]
 
-    # Group by region and month, then average the vector spaces
+    # Group by region and month, then average
     monthly_region_embeddings = (
         df_expanded.groupby(["admin1", "year_month"]).mean().reset_index()
     )
