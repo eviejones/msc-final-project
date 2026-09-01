@@ -242,7 +242,7 @@ def train_evaluate_model(
             "remove_abyei",
             "use_pca",
             "price_recency",
-            "seed"
+            "seed",
         ]
     }
 
@@ -270,7 +270,9 @@ def train_evaluate_model(
             cv=grouped_timeseries_cv,
             scoring="average_precision",
             n_jobs=-1,
-            random_state=params.get("seed", 23), # Default to original seed if nothing passed
+            random_state=params.get(
+                "seed", 23
+            ),  # Default to original seed if nothing passed
         )
 
         random_search.fit(X_train, y_train)
@@ -306,14 +308,14 @@ def train_evaluate_model(
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
 
-    max_f1 = f1_scores.max() # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
+    max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
     tied_indices = np.flatnonzero(f1_scores == max_f1)
     optimal_threshold = thresholds[tied_indices[-1]]
-    
+
     # Evaluate on train
     train_cv_aupr = average_precision_score(oof_y_true, oof_y_proba)
     train_cv_f1 = max_f1
-    
+
     # Calculate train precision and recall using out-of-fold predictions
     oof_y_pred = (oof_y_proba >= optimal_threshold).astype(int)
     train_report = classification_report(

@@ -130,9 +130,9 @@ def process_and_pivot_food_prices(
         counts = counts.where(group_id > 0, other=np.nan)
         return counts
 
-    df_expanded["months_since_reading"] = df_expanded.groupby(
-        ["region", "commodity"]
-    )["is_actual_reading"].transform(months_since_last_reading)
+    df_expanded["months_since_reading"] = df_expanded.groupby(["region", "commodity"])[
+        "is_actual_reading"
+    ].transform(months_since_last_reading)
 
     value_cols = ["usdprice_per_kg"]
     value_cols.append("months_since_reading")
@@ -192,9 +192,7 @@ def get_clean_data(
                 if enabled).
     """
     food_prices_df = read_food_prices(all_regions)
-    pivoted_df = process_and_pivot_food_prices(
-        food_prices_df, all_regions, all_months
-    )
+    pivoted_df = process_and_pivot_food_prices(food_prices_df, all_regions, all_months)
 
     predictor_cols = [
         col for col in pivoted_df.columns if col not in ["region", "year_month"]

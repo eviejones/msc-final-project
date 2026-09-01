@@ -31,19 +31,19 @@ class HdxClient:
     ) -> gpd.GeoDataFrame | None:
         """Fetches, caches, and reads administrative boundary data from HDX.
 
-        Reads the boundary file from a local cache if it already exists (unless
-        FORCE_DOWNLOAD is set), otherwise downloads it from HDX, extracts it if
-        it is a zip archive, and saves it to the local cache before reading it.
+                Reads the boundary file from a local cache if it already exists (unless
+                FORCE_DOWNLOAD is set), otherwise downloads it from HDX, extracts it if
+                it is a zip archive, and saves it to the local cache before reading it.
 
-        Args:
-            dataset_name (str): The HDX dataset identifier to fetch from.
-            file_name (str): The name of the resource file to look for within
-                the dataset.
-            file_type (str): The file extension/format to match (e.g. "shp").
-`
-        Returns:
-            gpd.GeoDataFrame | None: The admin boundaries as a GeoDataFrame, or
-                None if the dataset or a matching resource could not be found.
+                Args:
+                    dataset_name (str): The HDX dataset identifier to fetch from.
+                    file_name (str): The name of the resource file to look for within
+                        the dataset.
+                    file_type (str): The file extension/format to match (e.g. "shp").
+        `
+                Returns:
+                    gpd.GeoDataFrame | None: The admin boundaries as a GeoDataFrame, or
+                        None if the dataset or a matching resource could not be found.
         """
         download_dir = "data/hdx/admin_boundaries"
         formatted_name = self._format_file_name(file_name)
