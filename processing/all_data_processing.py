@@ -4,77 +4,21 @@ import processing.acled_events_processing as acled
 import processing.acled_text_processing as notes
 import processing.food_prices_processing as food
 import processing.rainfall_processing as rain
+from utils.data_prep import validate_data_inputs
 from utils.dates import (
     END_DATE,
     TRAIN_START_DATE,
     validate_data_coverage,
-    validate_date_ranges,
 )
 from utils.logger import get_logger
 
 logger = get_logger("Data preparation")
 
-
-def validate_data_inputs(
-    data_sources: list[str] | None = None, k: float = 0.5, event_col: str = "event_type"
-) -> None:
-    """Validates the input parameters for combining datasets.
-
-    Checks that the provided data sources, threshold multiplier (k), and
-    event column are of the correct type and contain permitted values.
-    Also triggers a validation of the global date ranges.
-
-    Args:
-        data_sources (list[str] | None, optional): A list of additional data
-            sources to merge. Valid options are "food", "rain", and "text".
-            Defaults to None.
-        k (float, optional): The standard deviation multiplier. Defaults to 0.5.
-        event_col (str, optional): The target column for events. Must be either
-            "event_type" or "sub_event_type". Defaults to "event_type".
-
-    Raises:
-        TypeError: If data_sources is not a list/None, or if k is not numeric.
-        ValueError: If unsupported data sources or event columns are provided.
-    """
-    # Validate dates
-    validate_date_ranges()
-
-    # Validate data_sources
-    if data_sources is not None:
-        if not isinstance(data_sources, list):
-            raise TypeError(
-                f"data_sources must be a list or None, got {type(data_sources).__name__}"
-            )
-
-        valid_sources = {"food", "rain", "text"}
-        sources_lower = [source.lower() for source in data_sources]
-        invalid_sources = [src for src in sources_lower if src not in valid_sources]
-
-        if invalid_sources:
-            raise ValueError(
-                f"Invalid data_sources provided: {invalid_sources}. "
-                f"Allowed sources are: {list(valid_sources)}"
-            )
-
-    # Validate k
-    if not isinstance(k, (int, float)):
-        raise TypeError(
-            f"k must be a numeric value (float or int), got {type(k).__name__}"
-        )
-
-    # Validate event_col
-    valid_event_cols = {"event_type", "sub_event_type"}
-    if event_col not in valid_event_cols:
-        raise ValueError(
-            f"Invalid event_col: '{event_col}'. Allowed values are: {valid_event_cols}"
-        )
-
-
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
-    k: float = 0.5,
-    event_col: str = "event_type",
-    conflict_only_embeddings: bool = False,
+    k: float = 1.75,
+    event_col: str = "sub_event_type",
+    conflict_only_embeddings: bool = True,
 ) -> tuple[pd.DataFrame, list[str]]:
     """Fetches and merges clean data from specified sources.
 
