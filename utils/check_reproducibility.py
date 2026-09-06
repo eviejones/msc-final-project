@@ -26,7 +26,7 @@ import sklearn
 import xgboost
 
 from models.train_models import train_evaluate_model
-from utils.data_prep import get_clean_combined_data
+from processing.all_data_processing import get_clean_combined_data
 
 # ============================================================
 # Part 1: Environment fingerprint

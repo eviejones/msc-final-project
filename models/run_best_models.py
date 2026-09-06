@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 
 from models.train_models import train_evaluate_model
+from processing.all_data_processing import get_clean_combined_data
 from utils.constants import COUNTRY
-from utils.data_prep import get_clean_combined_data
 from utils.logger import get_logger
 from utils.reporting import save_model_report
 
