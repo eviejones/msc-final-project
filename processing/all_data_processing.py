@@ -12,7 +12,7 @@ from utils.dates import (
 )
 from utils.logger import get_logger
 
-logger = get_logger("Data preparation")
+logger = get_logger("All data processing")
 
 def get_clean_combined_data(
     data_sources: list[str] | None = None,
