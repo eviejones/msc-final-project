@@ -299,4 +299,12 @@ def run_best_models(set_confg):
     )
 
 if __name__ == "__main__":
-    run_best_models()
+    run_best_models({"k": 1.75,
+    "threshold_fix_applied": True,
+    "price_recency": True,
+    "event_col": "sub_event_type",
+    "include_food": True,
+    "include_rain": False,
+    "n_splits": 5,
+    "seed": 999}
+    )
