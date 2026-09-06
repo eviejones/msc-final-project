@@ -2,7 +2,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import shap
 import xgboost as xgb
 from sklearn.metrics import (
     average_precision_score,
@@ -26,124 +25,20 @@ from utils.cross_validation import (
     verify_cv_splits,
 )
 from utils.data_prep import calculate_conflict_ratio, split_data
+from utils.evaluation import compute_shap_importance, shap_category
 from utils.logger import get_logger
 
 logger = get_logger("Train model")
 
 
-# Ref: https://shap.readthedocs.io/en/latest/example_notebooks/overviews/An%20introduction%20to%20explainable%20AI%20with%20Shapley%20values.html
-def compute_shap_importance(
-    model: xgb.XGBClassifier,
-    X: pd.DataFrame,
-    predictor_cols: list[str],
-    top_n: int = 30,
-) -> pd.DataFrame:
-    """
-    Computes SHAP values for each feature from a fitted XGBoost model.
-
-    Args:
-        model (xgb.XGBClassifier): A fitted XGBoost classifier.
-        X (pd.DataFrame): Feature matrix to explain (e.g. X_train). For large
-            datasets, consider passing a random sample (e.g. X.sample(2000,
-            random_state=7)) to keep runtime reasonable.
-        predictor_cols (list[str]): Column names corresponding to X's columns,
-            in order. Pass the final_predictor_cols from train_evaluate_model
-            (post-PCA names if use_pca=True).
-        top_n (int, optional): Number of top features to return. Defaults to 30.
-
-    Returns:
-        pd.DataFrame: Columns ["feature", "mean_abs_shap"], sorted descending,
-            truncated to top_n rows.
-    """
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X)
-
-    if isinstance(shap_values, list):
-        shap_values = shap_values[1]
-
-    mean_abs_shap = np.abs(shap_values).mean(axis=0)
-
-    importance_df = (
-        pd.DataFrame({"feature": predictor_cols, "mean_abs_shap": mean_abs_shap})
-        .sort_values("mean_abs_shap", ascending=False)
-        .reset_index(drop=True)
-    )
-    return importance_df.head(top_n)
-
-
-def shap_category(feature_name):
-    feature_name = str(feature_name).lower()
-    if feature_name.startswith("emb_") or feature_name.startswith("pc"):
-        return "Text Embeddings"
-    if feature_name.startswith("rolling_"):
-        return "Structural Baseline (Rolling Stats)"
-    if "rain" in feature_name:
-        return "Rainfall"
-    if "price" in feature_name:
-        return "Food Prices"
-    if "months_since" in feature_name:
-        return "Food Prices"
-    return "Tabular ACLED Counts"
-
-
-def train_evaluate_model(
+def _validate_train_evaluate_inputs(
     processed_df: pd.DataFrame,
     predictor_cols: list[str],
     params: dict[str, Any],
-    best_params: bool = False,
-    use_pca: bool = True,
-    compute_shap: bool = False,
-    shap_sample_size: int | None = 2000,
-    return_onset_predictions: bool = False,
-) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
-    """
-    Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
-
-    The dataset is split into training, onset, and active sets based on predefined date ranges.
-    It evaluates models using time-series cross-validation on the training set to find the
-    optimal classification threshold (maximising the F1 score). It then applies this threshold
-    to the onset and active test sets and returns detailed classification metrics.
-
-    Args:
-        processed_df (pd.DataFrame): The full preprocessed dataset containing features,
-            targets, and a 'year_month' column.
-        predictor_cols (list[str]): A list of column names in processed_df to use as features.
-        params (dict[str, Any]): A dictionary containing hyperparameters for XGBoost or the
-            RandomizedSearchCV grid. Must include 'k', 'n_splits', and 'event_col' keys.
-        best_params (bool, optional): If True, skips RandomizedSearchCV and fits the XGBoost
-            model directly using the provided `params`. Defaults to False.
-        use_pca (bool, optional): If True, applies PCA to the embedding features
-            (fitting only on the training set to prevent leakage). Defaults to True.
-        compute_shap (bool, optional): If True, computes SHAP feature importance on
-            the trained model using the training set (or a sample of it, see
-            shap_sample_size). Adds runtime, so leave False for sweep/search runs
-            and only enable for final chosen configs. Defaults to False.
-        shap_sample_size (int | None, optional): If set and compute_shap is True,
-            SHAP is computed on a random sample of this many training rows instead
-            of the full training set, to keep runtime manageable. Set to None to
-            use the full training set. Defaults to 2000.
-        return_onset_predictions (bool, optional): If True, also returns a
-            DataFrame of per-row onset predictions (region, year_month,
-            y_true, y_pred_proba, y_pred) - useful for slicing performance
-            by sub-period (e.g. before/after a specific date). Defaults to
-            False.
-
-    Returns:
-        tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]: A tuple containing:
-            - results (dict): A dictionary of evaluation metrics (AUPRC, Precision, Recall, F1)
-                for both onset and active datasets, as well as the optimal threshold.
-            - fitted_best_params (dict): A dictionary of the best hyperparameters used for the
-                model.
-            - shap_importance (pd.DataFrame | None): Top features by mean absolute SHAP
-                value if compute_shap=True, otherwise None.
-            - onset_predictions (pd.DataFrame | None): Per-row onset predictions if
-                return_onset_predictions=True, otherwise None.
-
-    Raises:
-        TypeError: If arguments are of incorrect types.
-        ValueError: If required columns or parameter keys are missing.
-    """
-    # ---- Input Validation
+    best_params: bool,
+    use_pca: bool,
+) -> None:
+    """Validates the inputs to train_evaluate_model, raising Errors."""
     if not isinstance(processed_df, pd.DataFrame):
         raise TypeError(
             f"processed_df must be a pandas DataFrame, got {type(processed_df).__name__}"
@@ -186,26 +81,40 @@ def train_evaluate_model(
     if not isinstance(use_pca, bool):
         raise TypeError(f"use_pca must be a boolean, got {type(use_pca).__name__}")
 
-    # ----Data Processing & Splitting
 
-    # Still includes emb
+def _split_and_transform(
+    processed_df: pd.DataFrame,
+    predictor_cols: list[str],
+    use_pca: bool,
+) -> tuple[
+    pd.DataFrame,
+    pd.Series,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.Series,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.Series,
+    pd.DataFrame,
+    list[str],
+]:
+    """
+    Splits processed_df into train/onset/active sets by date range, then builds
+    the feature matrices for each (applying PCA to the embedding features if
+    use_pca=True, fit on the training set only to avoid leakage).
+
+    Returns:
+        (train_df, y_train, X_train, onset_df, y_onset, X_onset,
+         active_df, y_active, X_active, final_predictor_cols)
+    """
     train_df, y_train, _ = split_data(
-        processed_df,
-        predictor_cols,
-        TRAIN_START_DATE,
-        TRAIN_END_DATE,
+        processed_df, predictor_cols, TRAIN_START_DATE, TRAIN_END_DATE
     )
     onset_df, y_onset, _ = split_data(
-        processed_df,
-        predictor_cols,
-        ONSET_START_DATE,
-        ONSET_END_DATE,
+        processed_df, predictor_cols, ONSET_START_DATE, ONSET_END_DATE
     )
     active_df, y_active, _ = split_data(
-        processed_df,
-        predictor_cols,
-        ACTIVE_START_DATE,
-        ACTIVE_END_DATE,
+        processed_df, predictor_cols, ACTIVE_START_DATE, ACTIVE_END_DATE
     )
 
     if use_pca:
@@ -222,12 +131,43 @@ def train_evaluate_model(
     X_onset.columns = X_onset.columns.astype(object)
     X_active.columns = X_active.columns.astype(object)
 
+    return (
+        train_df,
+        y_train,
+        X_train,
+        onset_df,
+        y_onset,
+        X_onset,
+        active_df,
+        y_active,
+        X_active,
+        final_predictor_cols,
+    )
+
+
+def _fit_model(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    train_df: pd.DataFrame,
+    params: dict[str, Any],
+    best_params: bool,
+) -> tuple[xgb.XGBClassifier, dict[str, Any], list[tuple[np.ndarray, np.ndarray]]]:
+    """
+    Builds the grouped time-series CV splits and fits an XGBoost classifier -
+    either directly with `params` (best_params=True), or via RandomizedSearchCV
+    treating `params` as the search grid.
+
+    Returns:
+        (best_model, fitted_best_params, grouped_timeseries_cv)
+    """
     ratios = calculate_conflict_ratio(train_df)
     scale_weight = ratios["non-escalation"] / ratios["escalation"]
 
     n_splits = params.get("n_splits", 4)
     grouped_timeseries_cv = list(
-        grouped_timeseries_cv_ids(train_df["year_month"], n_splits=n_splits)
+        grouped_timeseries_cv_ids(
+            train_df["year_month"], n_splits=n_splits
+        )  # From utils.cross_validation.py
     )
     verify_cv_splits(train_df, grouped_timeseries_cv)
 
@@ -246,7 +186,6 @@ def train_evaluate_model(
         ]
     }
 
-    # ---- Model Training
     if best_params:
         best_model = xgb.XGBClassifier(
             scale_pos_weight=scale_weight,
@@ -279,32 +218,63 @@ def train_evaluate_model(
         best_model = random_search.best_estimator_
         fitted_best_params = random_search.best_params_
 
-    # ---- SHAP Computation
-    shap_importance = None
-    if compute_shap:
-        shap_dfs = []
-        datasets = {"train": X_train, "onset": X_onset, "active": X_active}
+    return best_model, fitted_best_params, grouped_timeseries_cv
 
-        for split_name, X_split in datasets.items():
-            if shap_sample_size is not None and len(X_split) > shap_sample_size:
-                X_shap = X_split.sample(shap_sample_size, random_state=7)
-            else:
-                X_shap = X_split
 
-            split_shap_df = compute_shap_importance(
-                best_model, X_shap, final_predictor_cols
-            )
-            split_shap_df["dataset"] = split_name
-            shap_dfs.append(split_shap_df)
+def _compute_shap_for_splits(
+    best_model: xgb.XGBClassifier,
+    X_train: pd.DataFrame,
+    X_onset: pd.DataFrame,
+    X_active: pd.DataFrame,
+    final_predictor_cols: list[str],
+    shap_sample_size: int | None,
+) -> pd.DataFrame:
+    """Computes SHAP feature importance on each of train/onset/active, tagging
+    each row with its source dataset and a human-readable feature category."""
+    shap_dfs = []
+    datasets = {"train": X_train, "onset": X_onset, "active": X_active}
 
-        shap_importance = pd.concat(shap_dfs, ignore_index=True)
-        shap_importance["category"] = shap_importance["feature"].apply(shap_category)
+    for split_name, X_split in datasets.items():
+        if shap_sample_size is not None and len(X_split) > shap_sample_size:
+            X_shap = X_split.sample(shap_sample_size, random_state=7)
+        else:
+            X_shap = X_split
 
+        split_shap_df = compute_shap_importance(
+            best_model, X_shap, final_predictor_cols
+        )
+        split_shap_df["dataset"] = split_name
+        shap_dfs.append(split_shap_df)
+
+    shap_importance = pd.concat(shap_dfs, ignore_index=True)
+    shap_importance["category"] = shap_importance["feature"].apply(shap_category)
+    return shap_importance
+
+
+def _evaluate_model(
+    best_model: xgb.XGBClassifier,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    grouped_timeseries_cv: list[tuple[np.ndarray, np.ndarray]],
+    onset_df: pd.DataFrame,
+    X_onset: pd.DataFrame,
+    y_onset: pd.Series,
+    X_active: pd.DataFrame,
+    y_active: pd.Series,
+    final_predictor_cols: list[str],
+    return_onset_predictions: bool,
+) -> tuple[dict[str, Any], pd.DataFrame | None]:
+    """
+    Finds the F1-optimal classification threshold from out-of-fold training
+    predictions, then applies it to the onset and active test sets.
+
+    Returns:
+        (results, onset_predictions)
+    """
     oof_y_true, oof_y_proba = timeseries_cross_val_predict(
         best_model, X_train, y_train, grouped_timeseries_cv
     )
 
-    # ---- Optimisation
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
 
@@ -367,6 +337,112 @@ def train_evaluate_model(
         "active_recall_class1": f"{active_report[class_key]['recall']:.4f}",
         "active_f1_class1": f"{active_report[class_key]['f1-score']:.4f}",
     }
+
+    return results, onset_predictions
+
+
+def train_evaluate_model(
+    processed_df: pd.DataFrame,
+    predictor_cols: list[str],
+    params: dict[str, Any],
+    best_params: bool = False,
+    use_pca: bool = True,
+    compute_shap: bool = False,
+    shap_sample_size: int | None = 2000,
+    return_onset_predictions: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]:
+    """
+    Trains and evaluates an XGBoost classifier on time-series split data, optionally using PCA.
+
+    The dataset is split into training, onset, and active sets based on predefined date ranges.
+    It evaluates models using time-series cross-validation on the training set to find the
+    optimal classification threshold (maximising the F1 score). It then applies this threshold
+    to the onset and active test sets and returns detailed classification metrics.
+
+    Args:
+        processed_df (pd.DataFrame): The full preprocessed dataset containing features,
+            targets, and a 'year_month' column.
+        predictor_cols (list[str]): A list of column names in processed_df to use as features.
+        params (dict[str, Any]): A dictionary containing hyperparameters for XGBoost or the
+            RandomizedSearchCV grid. Must include 'k', 'n_splits', and 'event_col' keys.
+        best_params (bool, optional): If True, skips RandomizedSearchCV and fits the XGBoost
+            model directly using the provided `params`. Defaults to False.
+        use_pca (bool, optional): If True, applies PCA to the embedding features
+            (fitting only on the training set to prevent leakage). Defaults to True.
+        compute_shap (bool, optional): If True, computes SHAP feature importance on
+            the trained model using the training set (or a sample of it, see
+            shap_sample_size). Adds runtime, so leave False for sweep/search runs
+            and only enable for final chosen configs. Defaults to False.
+        shap_sample_size (int | None, optional): If set and compute_shap is True,
+            SHAP is computed on a random sample of this many training rows instead
+            of the full training set, to keep runtime manageable. Set to None to
+            use the full training set. Defaults to 2000.
+        return_onset_predictions (bool, optional): If True, also returns a
+            DataFrame of per-row onset predictions (region, year_month,
+            y_true, y_pred_proba, y_pred) - useful for slicing performance
+            by sub-period (e.g. before/after a specific date). Defaults to
+            False.
+
+    Returns:
+        tuple[dict[str, Any], dict[str, Any], pd.DataFrame | None, pd.DataFrame | None]: A tuple containing:
+            - results (dict): A dictionary of evaluation metrics (AUPRC, Precision, Recall, F1)
+                for both onset and active datasets, as well as the optimal threshold.
+            - fitted_best_params (dict): A dictionary of the best hyperparameters used for the
+                model.
+            - shap_importance (pd.DataFrame | None): Top features by mean absolute SHAP
+                value if compute_shap=True, otherwise None.
+            - onset_predictions (pd.DataFrame | None): Per-row onset predictions if
+                return_onset_predictions=True, otherwise None.
+
+    Raises:
+        TypeError: If arguments are of incorrect types.
+        ValueError: If required columns or parameter keys are missing.
+    """
+    _validate_train_evaluate_inputs(
+        processed_df, predictor_cols, params, best_params, use_pca
+    )
+
+    (
+        train_df,
+        y_train,
+        X_train,
+        onset_df,
+        y_onset,
+        X_onset,
+        _active_df,
+        y_active,
+        X_active,
+        final_predictor_cols,
+    ) = _split_and_transform(processed_df, predictor_cols, use_pca)
+
+    best_model, fitted_best_params, grouped_timeseries_cv = _fit_model(
+        X_train, y_train, train_df, params, best_params
+    )
+
+    shap_importance = None
+    if compute_shap:
+        shap_importance = _compute_shap_for_splits(
+            best_model,
+            X_train,
+            X_onset,
+            X_active,
+            final_predictor_cols,
+            shap_sample_size,
+        )
+
+    results, onset_predictions = _evaluate_model(
+        best_model,
+        X_train,
+        y_train,
+        grouped_timeseries_cv,
+        onset_df,
+        X_onset,
+        y_onset,
+        X_active,
+        y_active,
+        final_predictor_cols,
+        return_onset_predictions,
+    )
 
     fitted_best_params["k"] = params["k"]
     fitted_best_params["n_splits"] = params["n_splits"]
