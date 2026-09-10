@@ -1,91 +1,91 @@
 feature,mean_abs_shap,dataset,category
-rolling_mean_6m,0.20604494,train,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.1271566,train,Structural Baseline (Rolling Stats)
-emb_657,0.046782494,train,Text Embeddings
-emb_263,0.043556385,train,Text Embeddings
-emb_227,0.04035999,train,Text Embeddings
-peaceful_protest,0.024889845,train,Tabular ACLED Counts
-emb_348,0.023885647,train,Text Embeddings
-price_millet,0.021925882,train,Food Prices
-emb_210,0.021919454,train,Text Embeddings
-price_sorghum,0.021816736,train,Food Prices
-emb_141,0.021212561,train,Text Embeddings
-excessive_force_against_protesters,0.019064615,train,Tabular ACLED Counts
-emb_512,0.015022216,train,Text Embeddings
-emb_144,0.013626362,train,Text Embeddings
-emb_355,0.013510101,train,Text Embeddings
-emb_52,0.011843272,train,Text Embeddings
-emb_326,0.010889745,train,Text Embeddings
-emb_222,0.009812023,train,Text Embeddings
-emb_514,0.009727266,train,Text Embeddings
-emb_148,0.009673053,train,Text Embeddings
-emb_24,0.009210607,train,Text Embeddings
-emb_281,0.009107741,train,Text Embeddings
-emb_767,0.008230931,train,Text Embeddings
-price_wheat_flour,0.007517911,train,Food Prices
-emb_717,0.007285548,train,Text Embeddings
-emb_699,0.007254399,train,Text Embeddings
-emb_437,0.0072185216,train,Text Embeddings
-emb_586,0.006851424,train,Text Embeddings
-emb_15,0.0068090064,train,Text Embeddings
-emb_325,0.0067901225,train,Text Embeddings
-rolling_mean_6m,0.18195106,onset,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.13619262,onset,Structural Baseline (Rolling Stats)
-emb_263,0.046721783,onset,Text Embeddings
-emb_227,0.036818866,onset,Text Embeddings
-emb_657,0.036129676,onset,Text Embeddings
-emb_348,0.024195485,onset,Text Embeddings
-emb_437,0.02209206,onset,Text Embeddings
-emb_141,0.021793744,onset,Text Embeddings
-emb_210,0.020688115,onset,Text Embeddings
-peaceful_protest,0.019339127,onset,Tabular ACLED Counts
-emb_699,0.016780937,onset,Text Embeddings
-emb_514,0.015833734,onset,Text Embeddings
-looting_property_destruction,0.014463512,onset,Tabular ACLED Counts
-emb_24,0.014114695,onset,Text Embeddings
-emb_144,0.013955192,onset,Text Embeddings
-price_wheat_flour,0.013823207,onset,Food Prices
-emb_512,0.012552081,onset,Text Embeddings
-emb_355,0.012512124,onset,Text Embeddings
-emb_222,0.012073607,onset,Text Embeddings
-emb_148,0.011646928,onset,Text Embeddings
-emb_52,0.011480159,onset,Text Embeddings
-months_since_reading_sorghum,0.010600031,onset,Food Prices
-price_millet,0.010555749,onset,Food Prices
-emb_767,0.010495104,onset,Text Embeddings
-emb_281,0.010088337,onset,Text Embeddings
-emb_457,0.010028885,onset,Text Embeddings
-emb_326,0.009933776,onset,Text Embeddings
-emb_238,0.009412848,onset,Text Embeddings
-excessive_force_against_protesters,0.009167124,onset,Tabular ACLED Counts
-emb_741,0.008321684,onset,Text Embeddings
-rolling_mean_6m,0.1568201,active,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.124809265,active,Structural Baseline (Rolling Stats)
-emb_263,0.05051096,active,Text Embeddings
-emb_227,0.040173672,active,Text Embeddings
-emb_437,0.03485455,active,Text Embeddings
-emb_657,0.026085818,active,Text Embeddings
-emb_348,0.025819005,active,Text Embeddings
-emb_699,0.022134282,active,Text Embeddings
-emb_210,0.019287404,active,Text Embeddings
-emb_141,0.019191695,active,Text Embeddings
-emb_24,0.017156012,active,Text Embeddings
-emb_514,0.01638549,active,Text Embeddings
-emb_533,0.01622222,active,Text Embeddings
-peaceful_protest,0.015850805,active,Tabular ACLED Counts
-looting_property_destruction,0.015476959,active,Tabular ACLED Counts
-emb_238,0.015228282,active,Text Embeddings
-emb_144,0.014381455,active,Text Embeddings
-emb_148,0.014371325,active,Text Embeddings
-emb_457,0.013652989,active,Text Embeddings
-price_millet,0.0135499835,active,Food Prices
-emb_52,0.0130347535,active,Text Embeddings
-emb_741,0.012446809,active,Text Embeddings
-emb_222,0.012024665,active,Text Embeddings
-emb_767,0.012018053,active,Text Embeddings
-emb_512,0.010930418,active,Text Embeddings
-emb_153,0.0109224925,active,Text Embeddings
-price_wheat_flour,0.01031968,active,Food Prices
-months_since_reading_sorghum,0.01020251,active,Food Prices
-emb_239,0.009954817,active,Text Embeddings
-emb_326,0.009908788,active,Text Embeddings
+rolling_mean_6m,0.156841,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.10196659,train,Structural Baseline (Rolling Stats)
+emb_263,0.03395243,train,Text Embeddings
+emb_227,0.024184095,train,Text Embeddings
+emb_24,0.020518515,train,Text Embeddings
+price_sorghum,0.017244799,train,Food Prices
+emb_210,0.01640307,train,Text Embeddings
+emb_268,0.014996866,train,Text Embeddings
+emb_311,0.013995197,train,Text Embeddings
+emb_657,0.013132342,train,Text Embeddings
+emb_348,0.012662199,train,Text Embeddings
+emb_514,0.012507862,train,Text Embeddings
+emb_512,0.012495722,train,Text Embeddings
+excessive_force_against_protesters,0.010800205,train,Tabular ACLED Counts
+emb_375,0.008634881,train,Text Embeddings
+emb_325,0.008618937,train,Text Embeddings
+emb_144,0.008033933,train,Text Embeddings
+emb_141,0.0076768706,train,Text Embeddings
+emb_15,0.007474093,train,Text Embeddings
+emb_586,0.0059853983,train,Text Embeddings
+emb_54,0.0057249293,train,Text Embeddings
+emb_762,0.005180957,train,Text Embeddings
+emb_75,0.0049865833,train,Text Embeddings
+emb_533,0.0049848766,train,Text Embeddings
+emb_759,0.004943512,train,Text Embeddings
+emb_710,0.0048744003,train,Text Embeddings
+emb_655,0.004578708,train,Text Embeddings
+emb_315,0.004535578,train,Text Embeddings
+emb_153,0.004517326,train,Text Embeddings
+emb_281,0.0043444866,train,Text Embeddings
+rolling_mean_6m,0.13285954,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.11385476,onset,Structural Baseline (Rolling Stats)
+emb_263,0.038852546,onset,Text Embeddings
+emb_24,0.03126569,onset,Text Embeddings
+emb_227,0.021249877,onset,Text Embeddings
+emb_210,0.01790706,onset,Text Embeddings
+emb_268,0.017614583,onset,Text Embeddings
+emb_311,0.01624244,onset,Text Embeddings
+emb_348,0.013424027,onset,Text Embeddings
+emb_514,0.012348826,onset,Text Embeddings
+emb_657,0.011862008,onset,Text Embeddings
+emb_512,0.010716854,onset,Text Embeddings
+emb_325,0.008655665,onset,Text Embeddings
+emb_141,0.008322144,onset,Text Embeddings
+emb_144,0.00783007,onset,Text Embeddings
+emb_375,0.007598021,onset,Text Embeddings
+emb_15,0.007144786,onset,Text Embeddings
+emb_54,0.006713917,onset,Text Embeddings
+emb_586,0.0063564517,onset,Text Embeddings
+emb_762,0.0063116555,onset,Text Embeddings
+emb_710,0.0060759834,onset,Text Embeddings
+emb_533,0.006062842,onset,Text Embeddings
+emb_315,0.0058744005,onset,Text Embeddings
+price_sorghum,0.005733916,onset,Food Prices
+emb_655,0.0054601664,onset,Text Embeddings
+emb_709,0.005450694,onset,Text Embeddings
+excessive_force_against_protesters,0.0052844947,onset,Tabular ACLED Counts
+emb_230,0.005228358,onset,Text Embeddings
+emb_281,0.005175682,onset,Text Embeddings
+emb_767,0.0050525228,onset,Text Embeddings
+rolling_std_6m,0.12038388,active,Structural Baseline (Rolling Stats)
+rolling_mean_6m,0.113560766,active,Structural Baseline (Rolling Stats)
+emb_263,0.040950656,active,Text Embeddings
+emb_24,0.03442425,active,Text Embeddings
+emb_311,0.0224286,active,Text Embeddings
+emb_227,0.021299286,active,Text Embeddings
+emb_210,0.018550716,active,Text Embeddings
+emb_268,0.018461559,active,Text Embeddings
+emb_348,0.015634926,active,Text Embeddings
+emb_514,0.012566884,active,Text Embeddings
+emb_533,0.011874319,active,Text Embeddings
+emb_657,0.010542083,active,Text Embeddings
+emb_512,0.009525921,active,Text Embeddings
+emb_315,0.009212527,active,Text Embeddings
+emb_141,0.008285673,active,Text Embeddings
+emb_375,0.007807427,active,Text Embeddings
+emb_325,0.0076564234,active,Text Embeddings
+emb_230,0.0075003034,active,Text Embeddings
+emb_15,0.007468098,active,Text Embeddings
+emb_144,0.0069958414,active,Text Embeddings
+emb_54,0.006693071,active,Text Embeddings
+emb_767,0.006503292,active,Text Embeddings
+emb_762,0.006352055,active,Text Embeddings
+emb_655,0.0062792213,active,Text Embeddings
+emb_710,0.0058439914,active,Text Embeddings
+price_sorghum,0.005797312,active,Food Prices
+emb_281,0.005761541,active,Text Embeddings
+emb_222,0.0057531893,active,Text Embeddings
+emb_586,0.005742245,active,Text Embeddings
+emb_709,0.0057266396,active,Text Embeddings

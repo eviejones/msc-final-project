@@ -1,91 +1,91 @@
 feature,mean_abs_shap,dataset,category
-rolling_mean_6m,0.16264471,train,Structural Baseline (Rolling Stats)
-rolling_std_6m,0.123505555,train,Structural Baseline (Rolling Stats)
-PC2,0.07450826,train,Text Embeddings
-PC19,0.052892856,train,Text Embeddings
-PC27,0.049214303,train,Text Embeddings
-PC18,0.04701886,train,Text Embeddings
-PC4,0.03655285,train,Text Embeddings
-PC46,0.026984038,train,Text Embeddings
-price_millet,0.023205617,train,Food Prices
-price_sorghum,0.018667886,train,Food Prices
-PC40,0.016845616,train,Text Embeddings
-price_wheat_flour,0.015785974,train,Food Prices
-PC29,0.01545513,train,Text Embeddings
-PC12,0.015126405,train,Text Embeddings
-PC6,0.014739995,train,Text Embeddings
-armed_clash,0.014296093,train,Tabular ACLED Counts
-PC1,0.014092335,train,Text Embeddings
-PC22,0.013483531,train,Text Embeddings
-PC49,0.012179717,train,Text Embeddings
-PC11,0.012121602,train,Text Embeddings
-PC32,0.0115004415,train,Text Embeddings
-PC21,0.011040356,train,Text Embeddings
-PC39,0.010379635,train,Text Embeddings
-attack,0.010313294,train,Tabular ACLED Counts
-looting_property_destruction,0.010168983,train,Tabular ACLED Counts
-PC25,0.0098813,train,Text Embeddings
-excessive_force_against_protesters,0.009811067,train,Tabular ACLED Counts
-months_since_reading_sorghum,0.009182939,train,Food Prices
-PC3,0.00916457,train,Text Embeddings
-PC10,0.008822185,train,Text Embeddings
-rolling_std_6m,0.13587376,onset,Structural Baseline (Rolling Stats)
-rolling_mean_6m,0.13368566,onset,Structural Baseline (Rolling Stats)
-PC18,0.060033377,onset,Text Embeddings
-PC27,0.059368156,onset,Text Embeddings
-PC2,0.057934474,onset,Text Embeddings
-PC19,0.05240858,onset,Text Embeddings
-PC4,0.039037015,onset,Text Embeddings
-PC46,0.03615523,onset,Text Embeddings
-looting_property_destruction,0.020308984,onset,Tabular ACLED Counts
-PC40,0.019660983,onset,Text Embeddings
-price_millet,0.018700946,onset,Food Prices
-armed_clash,0.018454576,onset,Tabular ACLED Counts
-PC22,0.015870975,onset,Text Embeddings
-price_wheat_flour,0.014739973,onset,Food Prices
-PC49,0.014591998,onset,Text Embeddings
-PC12,0.013912512,onset,Text Embeddings
-PC29,0.013697281,onset,Text Embeddings
-PC6,0.013629768,onset,Text Embeddings
-PC9,0.011895968,onset,Text Embeddings
-PC39,0.011644374,onset,Text Embeddings
-PC21,0.0113019,onset,Text Embeddings
-PC38,0.01110793,onset,Text Embeddings
-PC25,0.010532069,onset,Text Embeddings
-PC31,0.010513287,onset,Text Embeddings
-PC24,0.010280339,onset,Text Embeddings
-PC32,0.00999735,onset,Text Embeddings
-attack,0.009788225,onset,Tabular ACLED Counts
-price_sorghum,0.009486548,onset,Food Prices
-PC1,0.009254349,onset,Text Embeddings
-other,0.009200824,onset,Tabular ACLED Counts
-rolling_std_6m,0.14417867,active,Structural Baseline (Rolling Stats)
-rolling_mean_6m,0.1262461,active,Structural Baseline (Rolling Stats)
-PC27,0.060471702,active,Text Embeddings
-PC2,0.05781018,active,Text Embeddings
-PC18,0.049707573,active,Text Embeddings
-PC19,0.04861278,active,Text Embeddings
-PC4,0.042014584,active,Text Embeddings
-PC46,0.03134397,active,Text Embeddings
-PC40,0.025418388,active,Text Embeddings
-looting_property_destruction,0.01947764,active,Tabular ACLED Counts
-price_millet,0.015933778,active,Food Prices
-PC25,0.015493429,active,Text Embeddings
-PC22,0.015478239,active,Text Embeddings
-PC49,0.0153991,active,Text Embeddings
-PC12,0.014901216,active,Text Embeddings
-price_sorghum,0.014816898,active,Food Prices
-other,0.0139928805,active,Tabular ACLED Counts
-price_wheat_flour,0.013643904,active,Food Prices
-armed_clash,0.012598374,active,Tabular ACLED Counts
-PC21,0.012478092,active,Text Embeddings
-PC24,0.0122961765,active,Text Embeddings
-PC9,0.012185674,active,Text Embeddings
-PC29,0.011854267,active,Text Embeddings
-PC3,0.011407916,active,Text Embeddings
-attack,0.010929948,active,Tabular ACLED Counts
-PC32,0.010413728,active,Text Embeddings
-PC26,0.010030164,active,Text Embeddings
-PC6,0.0099909,active,Text Embeddings
-PC31,0.009789811,active,Text Embeddings
-PC38,0.009199492,active,Text Embeddings
+rolling_mean_6m,0.17569932,train,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.08518652,train,Structural Baseline (Rolling Stats)
+PC2,0.075885825,train,Text Embeddings
+PC19,0.04617792,train,Text Embeddings
+PC27,0.03982054,train,Text Embeddings
+PC18,0.034612074,train,Text Embeddings
+PC4,0.029662633,train,Text Embeddings
+PC46,0.024893511,train,Text Embeddings
+price_sorghum,0.012129605,train,Food Prices
+price_millet,0.011016589,train,Food Prices
+PC40,0.010078476,train,Text Embeddings
+PC22,0.009977485,train,Text Embeddings
+attack,0.009720386,train,Tabular ACLED Counts
+PC39,0.00896005,train,Text Embeddings
+PC1,0.0088489,train,Text Embeddings
+looting_property_destruction,0.007972711,train,Tabular ACLED Counts
+PC12,0.007878502,train,Text Embeddings
+PC15,0.0078100194,train,Text Embeddings
+PC49,0.0072974395,train,Text Embeddings
+excessive_force_against_protesters,0.007131476,train,Tabular ACLED Counts
+PC6,0.007000931,train,Text Embeddings
+PC29,0.006493389,train,Text Embeddings
+price_wheat_flour,0.0061209127,train,Food Prices
+PC11,0.006016216,train,Text Embeddings
+armed_clash,0.0052002943,train,Tabular ACLED Counts
+PC44,0.004184234,train,Text Embeddings
+PC47,0.00390429,train,Text Embeddings
+PC41,0.0038116933,train,Text Embeddings
+PC8,0.003526247,train,Text Embeddings
+PC17,0.0033437805,train,Text Embeddings
+rolling_mean_6m,0.14533404,onset,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.08773743,onset,Structural Baseline (Rolling Stats)
+PC2,0.07048193,onset,Text Embeddings
+PC19,0.05200281,onset,Text Embeddings
+PC27,0.05165692,onset,Text Embeddings
+PC18,0.03962397,onset,Text Embeddings
+PC46,0.035391573,onset,Text Embeddings
+PC4,0.03316634,onset,Text Embeddings
+looting_property_destruction,0.0148741165,onset,Tabular ACLED Counts
+price_millet,0.013493099,onset,Food Prices
+PC40,0.011520023,onset,Text Embeddings
+PC22,0.011456097,onset,Text Embeddings
+attack,0.009001772,onset,Tabular ACLED Counts
+PC39,0.008484299,onset,Text Embeddings
+price_sorghum,0.008247609,onset,Food Prices
+PC1,0.007653026,onset,Text Embeddings
+PC6,0.0073026484,onset,Text Embeddings
+PC15,0.0067506274,onset,Text Embeddings
+PC49,0.0066815116,onset,Text Embeddings
+PC29,0.006613301,onset,Text Embeddings
+PC12,0.0064828205,onset,Text Embeddings
+armed_clash,0.004835093,onset,Tabular ACLED Counts
+PC44,0.0045896303,onset,Text Embeddings
+PC9,0.0044798665,onset,Text Embeddings
+price_wheat_flour,0.0043983506,onset,Food Prices
+PC8,0.004039442,onset,Text Embeddings
+PC17,0.0037394215,onset,Text Embeddings
+PC10,0.0036871168,onset,Text Embeddings
+excessive_force_against_protesters,0.0036726517,onset,Tabular ACLED Counts
+PC32,0.0035599696,onset,Text Embeddings
+rolling_mean_6m,0.13568126,active,Structural Baseline (Rolling Stats)
+rolling_std_6m,0.09673702,active,Structural Baseline (Rolling Stats)
+PC2,0.07185965,active,Text Embeddings
+PC19,0.056209818,active,Text Embeddings
+PC27,0.05542973,active,Text Embeddings
+PC46,0.03900598,active,Text Embeddings
+PC18,0.036583796,active,Text Embeddings
+PC4,0.03240351,active,Text Embeddings
+PC40,0.016355254,active,Text Embeddings
+looting_property_destruction,0.014475571,active,Tabular ACLED Counts
+PC22,0.010682206,active,Text Embeddings
+price_sorghum,0.009483967,active,Food Prices
+attack,0.008930536,active,Tabular ACLED Counts
+PC39,0.0074407537,active,Text Embeddings
+PC1,0.0071338825,active,Text Embeddings
+PC15,0.0068613845,active,Text Embeddings
+PC49,0.0066573042,active,Text Embeddings
+PC6,0.006637537,active,Text Embeddings
+PC29,0.0064013903,active,Text Embeddings
+price_millet,0.00619666,active,Food Prices
+PC12,0.005398501,active,Text Embeddings
+PC8,0.005325328,active,Text Embeddings
+PC9,0.0048249164,active,Text Embeddings
+armed_clash,0.0047587003,active,Tabular ACLED Counts
+PC44,0.004543803,active,Text Embeddings
+PC41,0.0041542733,active,Text Embeddings
+PC10,0.0040582325,active,Text Embeddings
+PC21,0.003932387,active,Text Embeddings
+PC32,0.003897298,active,Text Embeddings
+price_wheat_flour,0.003528208,active,Food Prices
