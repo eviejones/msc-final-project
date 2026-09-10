@@ -18,7 +18,6 @@ from utils.logger import get_logger
 
 logger = get_logger("Text processing")
 
-load_dotenv()
 
 EMBEDDINGS_PATH = f"data/acled/acled_{COUNTRY.lower()}_monthly_regional_embeddings.pkl"
 EMBEDDINGS_PATH_CONFLICT_ONLY = (

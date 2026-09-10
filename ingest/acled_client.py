@@ -21,18 +21,28 @@ class AcledClient:
     def __init__(self):
         load_dotenv()
         self.endpoint = "https://acleddata.com/api/acled/read?_format=json"
-
+        
+        self.api_available = True
         try:
             self.username = os.environ["ACLED_USERNAME"]
             self.password = os.environ["ACLED_PASSWORD"]
             self.token_url = os.environ["ACLED_TOKEN_URL"]
         except KeyError as e:
-            raise MissingEnvironmentVariable(
-                f"Environment variable {e.args[0]} does not exist. Make sure it is saved in the .env file."
+            logger.warning(
+                f"Environment variable {e.args[0]} is missing. "
+                "API access is disabled. The client will only attempt to read local cached data."
             )
+            self.api_available = False
+            self.access_token = None
+            return
 
         # Token is valid for 24 hours
-        self.access_token = self._get_access_token()
+        try:
+            self.access_token = self._get_access_token()
+        except Exception as e:
+            logger.error(f"Failed to retrieve API token: {e}. Falling back to local data only.")
+            self.api_available = False
+            self.access_token = None
 
     def _get_access_token(self):
         """Gets the access token required to call the API."""
@@ -116,7 +126,7 @@ class AcledClient:
             logger.info(f"Reading data from {filepath}.")
             return pd.read_csv(filepath)
         else:
-            logger.warning(f"No saved data found for {country_str}.")
+            logger.warning(f"No saved data found for {country_str} at {filepath}.")
             return pd.DataFrame()
 
     def _mark_conflict_events(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -197,7 +207,7 @@ class AcledClient:
                 data from, either a single event type or a list of them. Event
                 types must match ACLED event types. Defaults to None.
         Returns:
-            pd.DataFrame: Dataframe containing all data from the ACLED API.
+            pd.DataFrame: Dataframe containing all data from the ACLED API or local cache.
         """
         self._validate_dates(start_date, end_date)
         self._validate_country(country)
@@ -207,10 +217,16 @@ class AcledClient:
         self.end_date = pd.to_datetime(end_date).strftime("%Y-%m-%d")
         self.event_types = event_types
 
-        if not FORCE_DOWNLOAD:
+        if not FORCE_DOWNLOAD or not self.api_available:
             cached_df = self._read_data(country)
             if not cached_df.empty:
-                return cached_df
+                cached_df["event_date"] = pd.to_datetime(cached_df["event_date"])
+                mask = (cached_df["event_date"] >= pd.to_datetime(self.start_date)) & (cached_df["event_date"] <= pd.to_datetime(self.end_date))
+                return cached_df.loc[mask].copy()
+            elif not self.api_available:
+                raise RuntimeError(
+                    f"API credentials are missing and no local cache was found for {country}. Cannot retrieve data."
+                )
 
         params = self._build_params()
         params["page"] = 1
