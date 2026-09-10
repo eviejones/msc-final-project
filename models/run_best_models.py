@@ -1,6 +1,18 @@
-"""Runs the best model configs. These are manually added! The reports are saved in the evaluation folder."""
+"""Runs the model for the set configuration and saves detailed reports in the evaluation folder.
 
+The set configuration is decided in 03_results.ipynb and is:
+
+"k": 1.75,
+"event_col": "sub_event_type",
+"include_rain": False,
+"n_splits": 5,
+"seed": 999
+
+Each variant (corpus-type, PCA or not) is run on the best hyperparameters found during training (01_run_test_models.ipynb)."""
+
+import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -17,7 +29,31 @@ reports_dir.mkdir(parents=True, exist_ok=True)
 logger = get_logger("Run best models")
 
 
-def get_best_params_from_results(all_results, config):
+def get_best_params_from_results(
+    all_results: pd.DataFrame, 
+    config: dict[str, Any]
+) -> dict[str, int | float]:
+    """Extracts the XGBoost parameters from the results DataFrame.
+
+    Filters the provided DataFrame using the specified configuration to find a 
+    singular matching row, and extracts the corresponding XGBoost hyperparameters. 
+    Parameters such as maximum depth are cast to integers where appropriate to 
+    ensure expected behaviour.
+
+    Args:
+        all_results (pd.DataFrame): The DataFrame containing the hyperparameter 
+            optimisation results.
+        config (dict[str, Any]): A dictionary mapping column names to target 
+            values for filtering the results.
+
+    Returns:
+        dict[str, int | float]: A dictionary of the extracted XGBoost 
+            parameters.
+
+    Raises:
+        ValueError: If the configuration matches zero rows or more than one row 
+            in the results DataFrame.
+    """
     mask = pd.Series(True, index=all_results.index)
     for col, val in config.items():
         if col in all_results.columns:
@@ -26,7 +62,7 @@ def get_best_params_from_results(all_results, config):
     matches = all_results[mask]
     if len(matches) != 1:
         raise ValueError(
-            f"More than one matching row found: {len(matches)} for config {config}"
+            f"Number of matching rows found: {len(matches)} for config {config}"
         )
     row = matches.iloc[0]
 
@@ -48,7 +84,23 @@ def get_best_params_from_results(all_results, config):
     return params
 
 
-def summarise(label, subset):
+def summarise(label: str, subset: pd.DataFrame) -> dict[str, int | float]:
+    """Calculates and summarises evaluation metrics for a subset of predictions.
+
+    Computes the recall and precision for a specified subset of data containing 
+    true labels and model predictions. Prints a formatted summary string and 
+    returns a dictionary of the calculated metrics.
+
+    Args:
+        label (str): A descriptive name for the subset, used in the printed output.
+        subset (pd.DataFrame): The data containing the actual and predicted 
+            values. Must contain 'y_true' and 'y_pred' numeric columns.
+
+    Returns:
+        dict[str, int | float]: A dictionary containing the number of rows 
+            ('n_rows'), total true positives ('n_true_pos'), correctly predicted 
+            positives ('n_caught'), recall ('recall'), and precision ('precision').
+    """
     n_true_pos = subset["y_true"].sum()
     n_caught = subset[(subset["y_true"] == 1) & (subset["y_pred"] == 1)].shape[0]
     recall = n_caught / n_true_pos if n_true_pos else float("nan")
@@ -67,7 +119,30 @@ def summarise(label, subset):
     }
 
 
-def run_model(config, params):
+def run_model(
+    config: dict[str, Any], 
+    params: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame, pd.DataFrame]:
+    """Executes the modelling pipeline for a given configuration and parameter set.
+
+    Constructs the appropriate data sources based on the configuration flags, 
+    retrieves the cleaned and combined dataset, and trains the model. It bypasses 
+    randomised search to directly evaluate the model using the provided parameters, 
+    returning performance metrics, SHAP feature importance, and predictions.
+
+    Args:
+        config (dict[str, Any]): A dictionary containing pipeline configuration 
+            variables (e.g., 'include_food', 'k', 'event_col', 'use_pca').
+        params (dict[str, Any]): A dictionary of hyperparameters for the model.
+
+    Returns:
+        tuple[dict[str, Any], dict[str, Any], pd.DataFrame, pd.DataFrame]: A tuple 
+            containing:
+            - results: A dictionary of evaluation metrics.
+            - best_params: A dictionary of the final hyperparameters used.
+            - shap_importance: A DataFrame containing SHAP feature importances.
+            - onset_predictions: A DataFrame of predictions for conflict onset.
+    """
     data_sources = [
         src
         for src, include in zip(
@@ -90,7 +165,6 @@ def run_model(config, params):
         "event_col": config["event_col"],
         "n_splits": config["n_splits"],
         "use_pca": config["use_pca"],
-        "price_recency": config["price_recency"],
     }
 
     results, best_params, shap_importance, onset_predictions = train_evaluate_model(
@@ -108,14 +182,19 @@ def run_model(config, params):
 
 def model_report(label, config, params):
     results, best_params, shap_importance, onset_predictions = run_model(config, params)
-    print("========MODEL REPORT========")
-    print(f"---Model: {label}\n")
-    print("---Results\n")
-    print(results)
-    print("---Best Params\n")
-    print(best_params)
-    print("---SHAP Importance\n")
-    print(shap_importance)
+    print("=" * 40)
+    print(f"MODEL REPORT: {label}")
+    print("=" * 40)
+    
+    print("\n--- Results ---")
+    print(json.dumps(results, indent=2))
+    
+    print("\n--- Best Params ---")
+    print(json.dumps(best_params, indent=2))
+    
+    print("\n--- SHAP Importance (Top 10) ---")
+    print(shap_importance.head(10).to_string(index=False)) # ONly to string for better formatting
+    print("-" * 40, "\n")
 
     onset_predictions["year_month"] = onset_predictions["year_month"].astype(str)
     war_outbreak = "2023-04"
@@ -137,7 +216,7 @@ def model_report(label, config, params):
         "South Kordofan",
     ]
 
-    print("-----Key war-affected regions\n")
+    print("\n-----Key war-affected regions\n")
     key_region_rows = onset_predictions[onset_predictions["region"].isin(key_regions)]
     key_regions_summary = summarise("Key regions (all onset months)", key_region_rows)
 
@@ -300,12 +379,14 @@ def run_best_models(set_confg):
 
 
 if __name__ == "__main__":
-    run_best_models({"k": 1.75,
-    "threshold_fix_applied": True,
-    "price_recency": True,
-    "event_col": "sub_event_type",
-    "include_food": True,
-    "include_rain": False,
-    "n_splits": 5,
-    "seed": 999}
+    run_best_models(
+        {
+            "k": 1.75,
+            "event_col": "sub_event_type",
+            "threshold_fix_applied": True,
+            "include_food": True,
+            "include_rain": False,
+            "n_splits": 5,
+            "seed": 999,
+        }
     )
