@@ -81,6 +81,7 @@ def get_best_params_from_results(
     params = {p: row[f"param_{p}"].item() for p in param_names}
     for p in ["max_depth", "min_child_weight", "max_delta_step"]:
         params[p] = int(params[p])
+    params["seed"] = int(config["seed"])
     return params
 
 
@@ -383,7 +384,6 @@ if __name__ == "__main__":
         {
             "k": 1.75,
             "event_col": "sub_event_type",
-            "threshold_fix_applied": True,
             "include_food": True,
             "include_rain": False,
             "n_splits": 5,
