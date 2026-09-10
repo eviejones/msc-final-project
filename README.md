@@ -15,6 +15,10 @@ The purpose of the project is to evaluate whether adding text to a structural ba
 ## Installation
 
 1. Clone the repository and move into it (`cd`).
+   ```
+   git clone https://github.com/eviejones/msc-final-project.git
+   cd msc-final-project
+   ```
 2. Create a virtual environment (Python 3.14 was used for this project):
 
    ```
@@ -186,17 +190,20 @@ The results are saved in the `evaluation/model_reports` folder. It saved:
 - SHAP feature importance
 - Detailed onset predicted region-month and actual region-month for further comparison.
 
-## Virtual environment
+## Virtual Environment
 
-The results were ran with the following package versions and hardware. 
-Python version:      3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]
-Platform:            macOS-26.6.2-arm64-arm-64bit-Mach-O
-Processor:           arm
-CPU count:           18
-NumPy version:       2.4.6
-NumPy default int:   int64
-Pandas version:      2.3.3
-scikit-learn version:1.9.0
-XGBoost version:     3.4.0
+The results were run with the following package versions and hardware. 
 
-Running on a Windows device appears to give slightly different results. 
+| Environment / Package | Version / Details |
+| :--- | :--- |
+| **Python version** | 3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0] |
+| **Platform** | macOS-26.6.2-arm64-arm-64bit-Mach-O |
+| **Processor** | arm |
+| **CPU count** | 18 |
+| **NumPy version** | 2.4.6 |
+| **NumPy default int** | int64 |
+| **Pandas version** | 2.3.3 |
+| **scikit-learn version** | 1.9.0 |
+| **XGBoost version** | 3.4.0 |
+
+> **Note:** Running on a Windows device appears to give slightly different results.
