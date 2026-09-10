@@ -6,12 +6,16 @@ This project predicts monthly conflict escalation by region using a combination 
 ACLED conflict event data, WFP food prices, CHIRPS/HDX rainfall data, and ConfliBERT
 text embeddings of ACLED event notes, feeding an XGBoost classifier.
 
-The purpose of the project is to evaluate whether adding text to a structural baseline model (`Model A`) improves the performance. Four variants of of the text models (`Model B`) are referenced throughout (all-text corpus with and without PCA, conflct-only text corpus with and without PCA).
+The purpose of the project is to evaluate whether adding text to a structural baseline model (`Model A`) improves the performance. Four variants of of the text models (`Model B`) are referenced throughout:
+| | **Without PCA** | **With PCA** |
+| :--- | :--- | :--- |
+| **All text corpus** | Text includes notes from non-conflict events.<br><br>Average features: 790 | Text includes notes from non-conflict events, PCA is applied to reduce dimensions.<br><br>Average features: 73 |
+| **Conflict text corpus** | Text is restricted to only conflict events.<br><br>Average features: 790 | Text is restricted to only conflict events, PCA is applied to reduce dimensions.<br><br>Average features: 47 |
 
 ## Installation
 
 1. Clone the repository and move into it (`cd`).
-2. Create a virtual environment (Python 3.13 was used for this project):
+2. Create a virtual environment (Python 3.14 was used for this project):
 
    ```
    python -m venv .venv
@@ -34,14 +38,15 @@ The purpose of the project is to evaluate whether adding text to a structural ba
    pip install -r requirements.txt
    ```
   
-4. Install as an editable package
+4. Install as an editable package so that each of the folders can be used as a module
 
   ```
   pip install -e .
   ```
 
-## `.env` setup
+## [Optional] `.env` setup
 
+To read data from the ALCLED API requires a username and password. To do this create an account at https://acleddata.com/user/register.
 Create a `.env` file in the project root (it is git-ignored) with the following
 variables:
 
@@ -49,22 +54,18 @@ variables:
 ACLED_USERNAME=your_acled_email
 ACLED_PASSWORD=your_acled_password
 ACLED_TOKEN_URL=https://acleddata.com/oauth/token
-HF_TOKEN=your_huggingface_token
-MLFLOW_TRACKING_URI=http://127.0.0.1:5000
 ```
 
 - **ACLED_USERNAME / ACLED_PASSWORD / ACLED_TOKEN_URL** - required by
   [`ingest/acled_client.py`](ingest/acled_client.py) to obtain an OAuth access token
   from the ACLED API. Register for an account at
   [acleddata.com](https://acleddata.com) to get credentials.
-- **HF_TOKEN** - used by `transformers` when downloading the ConfliBERT model
-  (`eventdata-utd/ConfliBERT-scr-uncased`) from Hugging Face for text embeddings.
-- **MLFLOW_TRACKING_URI** - only required for logging model runs in `run_test_models.ipynb`.
-  Not needed for `run_best_model.py`, which doesn't log to MLflow.
 
 Note: raw and cached data (`data/`), the MLflow store (`models/mlflow.db`, `models/mlruns`)
 and other derived artifacts are also git-ignored, so a fresh checkout will fetch and
 cache data from ACLED/HDX/Hugging Face the first time each pipeline runs.
+
+**If you do not add your credentials the pipeline should still run on cached data.**
 
 ## Updating constants
 
@@ -121,7 +122,13 @@ As the data ingest and preparation (particularly ConfliBERT embeddings) can take
 
 
 ## Notebooks
-This project has three main notebooks.
+This project has three main notebooks, with a fourth for quick access to running the models.
+| Notebook | Description |
+| :--- | :--- |
+| `01_run_test_models.ipynb` | Exploratory orchestration script that executes all model configurations (including feature inclusion and k-value testing) and tracks results via MLflow. |
+| `02_methodology_decisions.ipynb` | Documents and validates key methodological choices made during the project, such as k-selection. |
+| `03_results.ipynb` | Produces the analytical content and figures covered in the Testing and Results section. |
+| `04_simple_model_run.ipynb` | The easiest entry point to run a single model and view its results. |
 
 ### `01_run_test_models.ipynb` - hyperparameter/config search
 
@@ -179,12 +186,9 @@ The results are saved in the `evaluation/model_reports` folder. It saved:
 - SHAP feature importance
 - Detailed onset predicted region-month and actual region-month for further comparison.
 
-## A note on virtual environment
+## Virtual environment
 
 The results were ran with the following package versions and hardware. 
-============================================================
-ENVIRONMENT
-============================================================
 Python version:      3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]
 Platform:            macOS-26.6.2-arm64-arm-64bit-Mach-O
 Processor:           arm
