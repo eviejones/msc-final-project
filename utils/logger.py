@@ -4,7 +4,8 @@ import logging
 
 
 def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
-    """Creates a configured logger with consistent formatting across modules.
+    """
+    Creates a configured logger with consistent formatting across modules.
 
     Args:
         name (str): Logger name (typically shown in log output).

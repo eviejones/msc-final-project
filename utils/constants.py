@@ -1,7 +1,5 @@
 """The main constants required for setting constants used throughout the project."""
 
-from pathlib import Path
-
 import pandas as pd
 
 # ---- Non-country specific constants
@@ -31,7 +29,7 @@ ONSET_END_DATE = pd.to_datetime("2023-12-31")
 ACTIVE_START_DATE = pd.to_datetime("2024-01-01")
 ACTIVE_END_DATE = pd.to_datetime("2025-12-31")
 
-# Ethiopia
+# ---- Ethiopia Example, don't uncomment unless you want to run the project for Ethiopia
 
 # COUNTRY = "Ethiopia"
 

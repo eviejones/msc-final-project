@@ -1,4 +1,6 @@
-"""Functions used for cross validation. Ensures cross-validation does not mix up time series."""
+"""Functions used for cross validation. Ensures cross-validation does not mix up time series.
+
+Ref: https://medium.com/@labdmitriy/advanced-group-time-series-validation-bb00d4a74bcc"""
 
 import numpy as np
 import pandas as pd
@@ -11,7 +13,8 @@ logger = get_logger("Cross validation")
 
 
 def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):
-    """Generates train and test indices for time series cross-validation.
+    """
+    Generates train and test indices for time series cross-validation.
 
     Args:
         dates (pd.Series): Column of all dates.
@@ -35,6 +38,28 @@ def grouped_timeseries_cv_ids(dates: pd.Series, n_splits: int = 4):
 
 
 def verify_cv_splits(df, cv_splits, date_column="year_month"):
+    """
+    Verifies that time-series cross-validation splits are strictly chronological and non-overlapping.
+
+    This function iterates through the provided cross-validation splits, extracts the corresponding
+    dates from the DataFrame, and prints the date ranges (start and end dates) for both the train
+    and test sets of each fold. It performs a safety check to ensure that the training period
+    strictly precedes the testing period, preventing temporal data leakage.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame containing the data.
+        cv_splits (iterable): An iterable (e.g., list or generator) of tuples yielding
+            (train_indices, test_indices) arrays or lists for each fold.
+        date_column (str, optional): The name of the column in `df` representing the
+            temporal data (e.g., dates or months). Defaults to "year_month".
+
+    Raises:
+        ValueError: If the end date of the training window is greater than or equal to the
+            start date of the test window in any fold, indicating an invalid temporal split.
+
+    Returns:
+        None
+    """
     logger.info("Cross-validation testing splits:")
     for fold, (train_idx, test_idx) in enumerate(cv_splits):
         train_dates = df.iloc[train_idx][date_column].unique()
@@ -66,7 +91,8 @@ def verify_cv_splits(df, cv_splits, date_column="year_month"):
 def timeseries_cross_val_predict(
     best_model, X_train: pd.DataFrame, y_train: pd.Series, cv: list[int]
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Returns arrays of training data actual Y and predicted probabilities.
+    """
+    Returns arrays of training data actual Y and predicted probabilities.
 
     Loops through each fold of training data to produce a full list of actual Y
     and out-of-fold predicted probabilities.

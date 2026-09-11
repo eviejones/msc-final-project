@@ -5,9 +5,6 @@ models/mlruns
 models/mlflow.db
 mlruns
 mlflow.db
-ingest/chirps_cache
 archive
 __pycache__
-mlruns_old_broken
 .DS_Store
-mlartifacts

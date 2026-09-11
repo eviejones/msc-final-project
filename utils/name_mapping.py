@@ -29,6 +29,8 @@ def clean_region_names(value: str, canonical_names=None) -> str:
 
     Checks the manual override table for COUNTRY first. If there's no override and a list of
     canonical names is supplied, falls back to fuzzy string matching against it.
+
+    AI prompt: How can I use fuzzy string matching to map raw region names to an existing list of region names?
     """
     if pd.isna(value):
         return value
@@ -84,6 +86,6 @@ def pcode_mapping(country: str, admin_level: int = 1) -> dict:
     if boundaries is None:
         raise ValueError(f"Could not fetch admin{admin_level} boundaries for {country}")
 
-    pcode_col = "adm1_pcode"  # Manually setting this to admin level 1 for now
+    pcode_col = "adm1_pcode"
     name_col = "adm1_name"
     return dict(zip(boundaries[pcode_col], boundaries[name_col]))

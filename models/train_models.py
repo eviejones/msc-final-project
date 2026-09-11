@@ -1,3 +1,9 @@
+"""Trains and evaluates the XGBoost classifier on the preprocessed dataset, using time-series cross-validation and optional PCA on embedding features.
+
+First it validates inputs, then splits the dataset into training, onset, and active sets based on predefined date ranges (in constants.py). It fits the model either directly with provided hyperparameters or via RandomizedSearchCV to find the best hyperparameters. The function computes SHAP feature importance if requested and evaluates the model on both the training and test sets, returning detailed classification metrics.
+
+AI was used for writing docstrings."""
+
 from typing import Any
 
 import numpy as np
@@ -229,8 +235,8 @@ def _compute_shap_for_splits(
     final_predictor_cols: list[str],
     shap_sample_size: int | None,
 ) -> pd.DataFrame:
-    """Computes SHAP feature importance on each of train/onset/active, tagging
-    each row with its source dataset and a human-readable feature category."""
+    """Computes SHAP feature importance on each of train/onset/active, mapping
+    each row with its source dataset and a feature category."""
     shap_dfs = []
     datasets = {"train": X_train, "onset": X_onset, "active": X_active}
 
@@ -271,6 +277,7 @@ def _evaluate_model(
     Returns:
         (results, onset_predictions)
     """
+    # ---- Evaluate on train with grouped time-series CV
     oof_y_true, oof_y_proba = timeseries_cross_val_predict(
         best_model, X_train, y_train, grouped_timeseries_cv
     )
@@ -278,8 +285,10 @@ def _evaluate_model(
     precisions, recalls, thresholds = precision_recall_curve(oof_y_true, oof_y_proba)
     f1_scores = (2 * precisions * recalls / (precisions + recalls + 1e-10))[:-1]
 
-    max_f1 = f1_scores.max()  # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
-    tied_indices = np.flatnonzero(f1_scores == max_f1)
+    max_f1 = f1_scores.max()
+    tied_indices = np.flatnonzero(
+        f1_scores == max_f1
+    )  # Ref: https://stackoverflow.com/questions/57060907compute-maximum-f1-score-using-precision-recall-curve
     optimal_threshold = thresholds[tied_indices[-1]]
 
     # Evaluate on train
@@ -292,11 +301,11 @@ def _evaluate_model(
         oof_y_true, oof_y_pred, output_dict=True, zero_division=0
     )
 
-    # Evaluate on onset test set
+    # ---- Evaluate on onset test set
     y_pred_proba_onset = best_model.predict_proba(X_onset)[:, 1]
     y_pred_custom_onset = (y_pred_proba_onset >= optimal_threshold).astype(int)
 
-    # Create onset_predictions, used for testing in the onset windows
+    # Create onset_predictions, used for testing in the onset windows, these are returns to the main function and then to the notebook for evaluation
     onset_predictions = None
     if return_onset_predictions:
         onset_predictions = onset_df[["region", "year_month"]].copy()

@@ -8,8 +8,6 @@ from utils.logger import get_logger
 logger = get_logger("Reporting")
 
 REPORTS_DIR = Path("evaluation/model_reports")
-reports_dir = Path(REPORTS_DIR)
-reports_dir.mkdir(parents=True, exist_ok=True)
 
 
 def save_model_report(
@@ -32,6 +30,9 @@ def save_model_report(
         shap_importance (pd.DataFrame): A DataFrame detailing the SHAP feature importances.
         onset_predictions (pd.DataFrame): A DataFrame containing the onset predictions.
     """
+    reports_dir = Path(REPORTS_DIR)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
     label_formatted = label.replace(" ", "_").replace("(", "").replace(")", "")
 
     with open(REPORTS_DIR / f"{label_formatted}_results.json", "w") as f:

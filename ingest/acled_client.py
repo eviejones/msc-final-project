@@ -1,3 +1,7 @@
+"""API handler for ACLED data. This module provides a client to fetch data from the ACLED API, handle authentication, and manage local caching of the data.
+
+It is based on documentation from ACLED: https://acleddata.com/acled-api-documentation"""
+
 import os
 
 import pandas as pd
@@ -21,7 +25,7 @@ class AcledClient:
     def __init__(self):
         load_dotenv()
         self.endpoint = "https://acleddata.com/api/acled/read?_format=json"
-        
+
         self.api_available = True
         try:
             self.username = os.environ["ACLED_USERNAME"]
@@ -40,7 +44,9 @@ class AcledClient:
         try:
             self.access_token = self._get_access_token()
         except Exception as e:
-            logger.error(f"Failed to retrieve API token: {e}. Falling back to local data only.")
+            logger.error(
+                f"Failed to retrieve API token: {e}. Falling back to local data only."
+            )
             self.api_available = False
             self.access_token = None
 
@@ -221,7 +227,9 @@ class AcledClient:
             cached_df = self._read_data(country)
             if not cached_df.empty:
                 cached_df["event_date"] = pd.to_datetime(cached_df["event_date"])
-                mask = (cached_df["event_date"] >= pd.to_datetime(self.start_date)) & (cached_df["event_date"] <= pd.to_datetime(self.end_date))
+                mask = (cached_df["event_date"] >= pd.to_datetime(self.start_date)) & (
+                    cached_df["event_date"] <= pd.to_datetime(self.end_date)
+                )
                 return cached_df.loc[mask].copy()
             elif not self.api_available:
                 raise RuntimeError(

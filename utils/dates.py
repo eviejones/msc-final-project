@@ -40,13 +40,13 @@ def validate_date_ranges() -> None:
     ]
 
     for name, start, end in periods:
-        for bound_name, value in (
+        for set_timestamp, value in (
             (f"{name}_START_DATE", start),
             (f"{name}_END_DATE", end),
         ):
             if not isinstance(value, pd.Timestamp):
                 raise TypeError(
-                    f"{bound_name} must be a pd.Timestamp, got {type(value).__name__}: {value!r}"
+                    f"{set_timestamp} must be a pd.Timestamp, got {type(value).__name__}: {value!r}"
                 )
 
     for name, start, end in periods:
@@ -125,7 +125,7 @@ def get_padded_index(df, all_regions, all_months, warmup_start_date):
     Creates the components for an index that accounts for the 1-month padding
     needed by food, rain and text data.
 
-    As each of the monthly data sets are shifted, we need to have a preceding
+    As each of the monthly data sets are shifted, the preceding
     month that is then removed.
 
     Returns the padded DataFrame, the regions array, the padded months array,

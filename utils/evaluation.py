@@ -44,7 +44,16 @@ def compute_shap_importance(
     return importance_df.head(top_n)
 
 
-def shap_category(feature_name):
+def shap_category(feature_name: str) -> str:
+    """
+    Maps the feature name to a broader category for SHAP analysis.
+
+    Args:
+        feature_name (str): The name of the feature.
+
+    Returns:
+        str: The category to which the feature belongs.
+    """
     feature_name = str(feature_name).lower()
     if feature_name.startswith("emb_") or feature_name.startswith("pc"):
         return "Text Embeddings"

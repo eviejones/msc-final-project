@@ -1,3 +1,7 @@
+"""API handler for HDX data. This module provides a client to fetch data from the Humanitarian Data Exchange (HDX) platform, handle authentication, and manage local caching of the data.
+
+It is based on documentation from HDX: https://docs.humdata.org/hdx-python-api/"""
+
 import os
 import re
 import zipfile

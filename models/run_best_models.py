@@ -11,7 +11,6 @@ The set configuration is decided in 03_results.ipynb and is:
 Each variant (corpus-type, PCA or not) is run on the best hyperparameters found during training (01_run_test_models.ipynb)."""
 
 import json
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -22,36 +21,32 @@ from utils.constants import COUNTRY
 from utils.logger import get_logger
 from utils.reporting import save_model_report
 
-REPORTS_DIR = Path("evaluation/model_reports")
-reports_dir = Path(REPORTS_DIR)
-reports_dir.mkdir(parents=True, exist_ok=True)
-
 logger = get_logger("Run best models")
 
 
-def get_best_params_from_results(
-    all_results: pd.DataFrame, 
-    config: dict[str, Any]
+def _get_best_params_from_results(
+    all_results: pd.DataFrame, config: dict[str, Any]
 ) -> dict[str, int | float]:
-    """Extracts the XGBoost parameters from the results DataFrame.
+    """
+    Extracts the XGBoost parameters from the results DataFrame.
 
-    Filters the provided DataFrame using the specified configuration to find a 
-    singular matching row, and extracts the corresponding XGBoost hyperparameters. 
-    Parameters such as maximum depth are cast to integers where appropriate to 
+    Filters the provided DataFrame using the specified configuration to find a
+    singular matching row, and extracts the corresponding XGBoost hyperparameters.
+    Parameters such as maximum depth are cast to integers where appropriate to
     ensure expected behaviour.
 
     Args:
-        all_results (pd.DataFrame): The DataFrame containing the hyperparameter 
+        all_results (pd.DataFrame): The DataFrame containing the hyperparameter
             optimisation results.
-        config (dict[str, Any]): A dictionary mapping column names to target 
+        config (dict[str, Any]): A dictionary mapping column names to target
             values for filtering the results.
 
     Returns:
-        dict[str, int | float]: A dictionary of the extracted XGBoost 
+        dict[str, int | float]: A dictionary of the extracted XGBoost
             parameters.
 
     Raises:
-        ValueError: If the configuration matches zero rows or more than one row 
+        ValueError: If the configuration matches zero rows or more than one row
             in the results DataFrame.
     """
     mask = pd.Series(True, index=all_results.index)
@@ -85,21 +80,22 @@ def get_best_params_from_results(
     return params
 
 
-def summarise(label: str, subset: pd.DataFrame) -> dict[str, int | float]:
-    """Calculates and summarises evaluation metrics for a subset of predictions.
+def _summarise(label: str, subset: pd.DataFrame) -> dict[str, int | float]:
+    """
+    Calculates and summarises evaluation metrics for a subset of predictions.
 
-    Computes the recall and precision for a specified subset of data containing 
-    true labels and model predictions. Prints a formatted summary string and 
+    Computes the recall and precision for a specified subset of data containing
+    true labels and model predictions. Prints a formatted summary string and
     returns a dictionary of the calculated metrics.
 
     Args:
         label (str): A descriptive name for the subset, used in the printed output.
-        subset (pd.DataFrame): The data containing the actual and predicted 
+        subset (pd.DataFrame): The data containing the actual and predicted
             values. Must contain 'y_true' and 'y_pred' numeric columns.
 
     Returns:
-        dict[str, int | float]: A dictionary containing the number of rows 
-            ('n_rows'), total true positives ('n_true_pos'), correctly predicted 
+        dict[str, int | float]: A dictionary containing the number of rows
+            ('n_rows'), total true positives ('n_true_pos'), correctly predicted
             positives ('n_caught'), recall ('recall'), and precision ('precision').
     """
     n_true_pos = subset["y_true"].sum()
@@ -121,23 +117,23 @@ def summarise(label: str, subset: pd.DataFrame) -> dict[str, int | float]:
 
 
 def run_model(
-    config: dict[str, Any], 
-    params: dict[str, Any]
+    config: dict[str, Any], params: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame, pd.DataFrame]:
-    """Executes the modelling pipeline for a given configuration and parameter set.
+    """
+    Executes the modelling pipeline for a given configuration and parameter set.
 
-    Constructs the appropriate data sources based on the configuration flags, 
-    retrieves the cleaned and combined dataset, and trains the model. It bypasses 
-    randomised search to directly evaluate the model using the provided parameters, 
+    Constructs the appropriate data sources based on the configuration flags,
+    retrieves the cleaned and combined dataset, and trains the model. It bypasses
+    randomised search to directly evaluate the model using the provided parameters,
     returning performance metrics, SHAP feature importance, and predictions.
 
     Args:
-        config (dict[str, Any]): A dictionary containing pipeline configuration 
+        config (dict[str, Any]): A dictionary containing pipeline configuration
             variables (e.g., 'include_food', 'k', 'event_col', 'use_pca').
         params (dict[str, Any]): A dictionary of hyperparameters for the model.
 
     Returns:
-        tuple[dict[str, Any], dict[str, Any], pd.DataFrame, pd.DataFrame]: A tuple 
+        tuple[dict[str, Any], dict[str, Any], pd.DataFrame, pd.DataFrame]: A tuple
             containing:
             - results: A dictionary of evaluation metrics.
             - best_params: A dictionary of the final hyperparameters used.
@@ -186,15 +182,17 @@ def model_report(label, config, params):
     print("=" * 40)
     print(f"MODEL REPORT: {label}")
     print("=" * 40)
-    
+
     print("\n--- Results ---")
     print(json.dumps(results, indent=2))
-    
+
     print("\n--- Best Params ---")
     print(json.dumps(best_params, indent=2))
-    
+
     print("\n--- SHAP Importance (Top 10) ---")
-    print(shap_importance.head(10).to_string(index=False)) # ONly to string for better formatting
+    print(
+        shap_importance.head(10).to_string(index=False)
+    )  # ONly to string for better formatting
     print("-" * 40, "\n")
 
     onset_predictions["year_month"] = onset_predictions["year_month"].astype(str)
@@ -203,8 +201,8 @@ def model_report(label, config, params):
     pre_war = onset_predictions[onset_predictions["year_month"] < war_outbreak]
     post_war = onset_predictions[onset_predictions["year_month"] >= war_outbreak]
 
-    pre_war_summary = summarise("Pre-war  (Jan-Mar 2023)", pre_war)
-    post_war_summary = summarise("Post-war (Apr-Dec 2023)", post_war)
+    pre_war_summary = _summarise("Pre-war  (Jan-Mar 2023)", pre_war)
+    post_war_summary = _summarise("Post-war (Apr-Dec 2023)", post_war)
 
     key_regions = [
         "Khartoum",
@@ -219,17 +217,17 @@ def model_report(label, config, params):
 
     print("\n-----Key war-affected regions\n")
     key_region_rows = onset_predictions[onset_predictions["region"].isin(key_regions)]
-    key_regions_summary = summarise("Key regions (all onset months)", key_region_rows)
+    key_regions_summary = _summarise("Key regions (all onset months)", key_region_rows)
 
     khartoum_rows = onset_predictions[onset_predictions["region"] == "Khartoum"]
-    khartoum_summary = summarise("  Khartoum", khartoum_rows)
+    khartoum_summary = _summarise("  Khartoum", khartoum_rows)
 
     for region in key_regions:
         if region == "Khartoum":
             continue
         region_rows = onset_predictions[onset_predictions["region"] == region]
         if region_rows["y_true"].sum() > 0:
-            summarise(f"  {region}", region_rows)
+            _summarise(f"  {region}", region_rows)
 
     comparison_row = {
         "model": label,
@@ -258,7 +256,7 @@ def run_best_models(set_confg):
         "conflict_only_embeddings": False,
         "use_pca": False,
     }
-    model_a_params = get_best_params_from_results(all_results, model_a_config)
+    model_a_params = _get_best_params_from_results(all_results, model_a_config)
     results_a, best_params_a, shap_a, onset_preds_a, row_a = model_report(
         "Model A", model_a_config, model_a_params
     )
@@ -271,7 +269,7 @@ def run_best_models(set_confg):
         "conflict_only_embeddings": True,
         "use_pca": True,
     }
-    model_b_conflict_pca_params = get_best_params_from_results(
+    model_b_conflict_pca_params = _get_best_params_from_results(
         all_results, model_b_conflict_pca_config
     )
     (
@@ -300,7 +298,7 @@ def run_best_models(set_confg):
         "conflict_only_embeddings": True,
         "use_pca": False,
     }
-    model_b_conflict_nopca_params = get_best_params_from_results(
+    model_b_conflict_nopca_params = _get_best_params_from_results(
         all_results, model_b_conflict_nopca_config
     )
     (
@@ -329,7 +327,7 @@ def run_best_models(set_confg):
         "conflict_only_embeddings": False,
         "use_pca": False,
     }
-    model_b_all_nopca_params = get_best_params_from_results(
+    model_b_all_nopca_params = _get_best_params_from_results(
         all_results, model_b_all_nopca_config
     )
     (
@@ -358,7 +356,7 @@ def run_best_models(set_confg):
         "conflict_only_embeddings": False,
         "use_pca": True,
     }
-    model_b_all_pca_params = get_best_params_from_results(
+    model_b_all_pca_params = _get_best_params_from_results(
         all_results, model_b_all_pca_config
     )
     (
@@ -379,7 +377,7 @@ def run_best_models(set_confg):
     )
 
 
-if __name__ == "__main__":
+if __name__ == "_main_":
     run_best_models(
         {
             "k": 1.75,
