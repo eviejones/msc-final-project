@@ -22,7 +22,7 @@ The purpose of the project is to evaluate whether adding text to a structural ba
 2. Create a virtual environment (Python 3.14 was used for this project):
 
    ```
-   python -m venv .venv
+   python3.14 -m venv .venv
    ```
 
    Activate it:
